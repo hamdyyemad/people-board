@@ -1,0 +1,10 @@
+# Add these entries to your hosts file for local subdomain testing
+# Windows: C:\Windows\System32\drivers\etc\hosts
+# macOS/Linux: /etc/hosts
+
+127.0.0.1 localhost
+127.0.0.1 ar.localhost
+
+# Usage:
+# - English: http://localhost:3000
+# - Arabic: http://ar.localhost:3000

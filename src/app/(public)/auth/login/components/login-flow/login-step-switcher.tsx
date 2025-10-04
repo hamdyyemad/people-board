@@ -4,7 +4,11 @@ import { LoginFormWithRole } from "./form/login-form-with-role";
 import { useRoleSelection } from "../../hooks/use-role-selection";
 import { FlipCard } from "@/frontend_lib/components/flip-card";
 
-export function LoginStepSwitcher() {
+interface LoginStepSwitcherProps {
+  translations: Record<string, string>;
+}
+
+export function LoginStepSwitcher({ translations }: LoginStepSwitcherProps) {
   const {
     selectedRole,
     handleRoleSelect: onRoleSelect,
@@ -14,10 +18,16 @@ export function LoginStepSwitcher() {
   // Derive isFlipped from selectedRole - no need for additional state
   const isFlipped = selectedRole !== null;
 
-  const frontContent = <RoleSelection onContinue={onRoleSelect} />;
+  const frontContent = (
+    <RoleSelection onContinue={onRoleSelect} translations={translations} />
+  );
 
   const backContent = (
-    <LoginFormWithRole userRole={selectedRole || "HR"} onBack={onBack} />
+    <LoginFormWithRole
+      userRole={selectedRole || "HR"}
+      onBack={onBack}
+      translations={translations}
+    />
   );
 
   return (

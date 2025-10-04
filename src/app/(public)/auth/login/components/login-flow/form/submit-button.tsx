@@ -3,12 +3,15 @@ import { type UserRole } from "@/frontend_lib/hooks/auth";
 
 interface SubmitButtonProps {
   userRole: UserRole;
+  translations: Record<string, string>;
 }
 
-export function SubmitButton({ userRole }: SubmitButtonProps) {
+export function SubmitButton({ userRole, translations }: SubmitButtonProps) {
+  const t = (key: string) => translations[key] || key;
+
   return (
     <Button type="submit" className="w-full h-12 text-base font-normal">
-      Sign In as {userRole}
+      {t("signInAs")} {userRole}
     </Button>
   );
 }

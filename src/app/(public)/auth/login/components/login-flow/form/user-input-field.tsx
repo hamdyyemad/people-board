@@ -7,14 +7,19 @@ import { type UserRole } from "@/frontend_lib/hooks/auth";
 
 interface UserInputFieldProps {
   userRole: UserRole;
+  translations: Record<string, string>;
 }
 
-export function UserInputField({ userRole }: UserInputFieldProps) {
+export function UserInputField({
+  userRole,
+  translations,
+}: UserInputFieldProps) {
+  const t = (key: string) => translations[key] || key;
   const isHR = userRole === "HR";
-  const inputLabel = isHR ? "Username" : "User ID";
+  const inputLabel = isHR ? t("username") : t("userID");
   const inputPlaceholder = isHR
-    ? "Enter your username (e.g., John.Doe)"
-    : "Enter your user ID (numbers only)";
+    ? t("usernamePlaceholder")
+    : t("userIDPlaceholder");
   const inputType = isHR ? "text" : "number";
   const inputIcon = isHR ? User : Hash;
 

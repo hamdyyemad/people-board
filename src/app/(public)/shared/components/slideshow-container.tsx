@@ -1,9 +1,17 @@
 "use client";
 
 import { useSlideshow } from "../hooks/use-slideshow";
-import { slideshowData } from "../data/slideshow-data";
+import { getSlideshowData } from "../data/slideshow-data";
+import { useLocaleStore } from "@/frontend_lib/stores/locale-store";
 
-export function SlideshowContainer() {
+interface SlideshowContainerProps {
+  translations: Record<string, string>;
+}
+
+export function SlideshowContainer({ translations }: SlideshowContainerProps) {
+  const t = (key: string) => translations[key] || key;
+  const slideshowData = getSlideshowData(t);
+
   const { currentSlide, animationKey } = useSlideshow({
     slideDuration: 8000, // 8 seconds per slide
     totalSlides: slideshowData.length,
@@ -12,19 +20,29 @@ export function SlideshowContainer() {
   return (
     <div className="flex items-center justify-center p-12 relative overflow-hidden w-full h-full">
       {/* Background Image Slider */}
-      <ImageSlider currentSlide={currentSlide} />
+      <ImageSlider currentSlide={currentSlide} translations={translations} />
 
       <div className="max-w-lg w-full text-white relative z-10">
         <AnimatedContent
           currentSlide={currentSlide}
           animationKey={animationKey}
+          slideshowData={slideshowData}
         />
       </div>
     </div>
   );
 }
 
-function ImageSlider({ currentSlide }: { currentSlide: number }) {
+function ImageSlider({
+  currentSlide,
+  translations,
+}: {
+  currentSlide: number;
+  translations: Record<string, string>;
+}) {
+  const t = (key: string) => translations[key] || key;
+  const slideshowData = getSlideshowData(t);
+
   return (
     <div className="absolute inset-0 overflow-hidden">
       <div className="relative w-full h-full">
@@ -53,11 +71,14 @@ function ImageSlider({ currentSlide }: { currentSlide: number }) {
 function AnimatedContent({
   currentSlide,
   animationKey,
+  slideshowData,
 }: {
   currentSlide: number;
   animationKey: number;
+  slideshowData: any[];
 }) {
   const currentSlideData = slideshowData[currentSlide];
+  const isRTL = useLocaleStore((state) => state.isRTL);
 
   return (
     <div className="space-y-6" key={animationKey}>
@@ -99,7 +120,7 @@ function AnimatedContent({
       />
 
       {/* Main Heading */}
-      <div className="fade-in-up">
+      <div className={`fade-in-up ${isRTL ? "text-right" : "text-left"}`}>
         <h1 className="text-5xl font-normal leading-tight">
           {currentSlideData.heading}
         </h1>
@@ -107,25 +128,39 @@ function AnimatedContent({
 
       {/* Testimonial */}
       <div className="space-y-6">
-        <div className="relative fade-in-up-delay-1">
+        <div
+          className={`relative fade-in-up-delay-1 ${
+            isRTL ? "text-right" : "text-left"
+          }`}
+        >
           <svg
-            className="absolute -top-6 -left-6 w-12 h-12 text-white/40"
+            className={`absolute -top-6 w-12 h-12 text-white/40 ${
+              isRTL ? "-right-6" : "-left-6"
+            }`}
             fill="currentColor"
             viewBox="0 0 32 32"
           >
             <path d="M10 8c-3.3 0-6 2.7-6 6v10h10V14H8c0-2.2 1.8-4 4-4V8zm14 0c-3.3 0-6 2.7-6 6v10h10V14h-6c0-2.2 1.8-4 4-4V8z" />
           </svg>
-          <p className="text-lg leading-relaxed pl-8">
+          <p className={`text-lg leading-relaxed ${isRTL ? "pr-8" : "pl-8"}`}>
             &quot;{currentSlideData.testimonial.text}&quot;
           </p>
         </div>
 
         {/* Testimonial Author */}
-        <div className="flex items-center space-x-3 pl-8 fade-in-up-delay-2">
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-sm font-semibold">
+        <div
+          className={`flex items-center ${
+            isRTL ? "space-x-reverse space-x-3 pr-8" : "space-x-3 pl-8"
+          } fade-in-up-delay-2`}
+        >
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-sm font-semibold flex-shrink-0">
             {currentSlideData.testimonial.initials}
           </div>
-          <div className="fade-in-up-delay-3">
+          <div
+            className={`fade-in-up-delay-3 ${
+              isRTL ? "text-right" : "text-left"
+            }`}
+          >
             <p className="font-medium">{currentSlideData.testimonial.author}</p>
             <p className="text-sm text-white/80">
               {currentSlideData.testimonial.role}

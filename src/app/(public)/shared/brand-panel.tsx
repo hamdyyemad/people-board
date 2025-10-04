@@ -5,7 +5,11 @@ import { DecoratorWrapper } from "./components/decorator-wrapper";
 import { SlideshowContainer } from "./components/slideshow-container";
 import { useIsMobile } from "@/frontend_lib/hooks/use-mobile";
 
-export function BrandPanel() {
+interface BrandPanelProps {
+  translations: Record<string, string>;
+}
+
+export function BrandPanel({ translations }: BrandPanelProps) {
   const isMobile = useIsMobile();
 
   // Don't render anything on mobile to prevent network downloads
@@ -16,9 +20,9 @@ export function BrandPanel() {
 
   return (
     <DecoratorWrapper>
-      <SlideshowContainer />
+      <SlideshowContainer translations={translations} />
       <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-full max-w-lg px-12">
-        <CompaniesSection />
+        <CompaniesSection translations={translations} />
       </div>
     </DecoratorWrapper>
   );
