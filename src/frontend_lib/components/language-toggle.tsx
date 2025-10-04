@@ -2,10 +2,7 @@
 
 import { USFlag, EgyptFlag } from "./flags";
 import { cn } from "../utils/utils";
-import {
-  getLanguageFromSubdomain,
-  buildSubdomainUrl,
-} from "../utils/subdomain";
+import { buildSubdomainUrl } from "../utils/subdomain";
 import { buildDevSubdomainUrl } from "../utils/dev-subdomain";
 import { useLocaleStore } from "../stores/locale-store";
 
@@ -22,7 +19,7 @@ export function LanguageToggle({
 }: LanguageToggleProps) {
   const { locale: currentLanguage } = useLocaleStore();
   const isEnglish = currentLanguage === "en";
-  const isArabic = currentLanguage === "ar";
+  // const isArabic = currentLanguage === "ar";
 
   const toggleLanguage = () => {
     if (typeof window === "undefined") return;

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSlideshow } from "../hooks/use-slideshow";
 import { getSlideshowData } from "../data/slideshow-data";
 import { useLocaleStore } from "@/frontend_lib/stores/locale-store";
@@ -55,10 +56,13 @@ function ImageSlider({
                 : "opacity-0 scale-105"
             }`}
           >
-            <img
+            <Image
               src={slide.image.src}
               alt={slide.image.alt}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority={index === 0}
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-br from-[#0d4d4d]/70 to-[#0a5c5c]/70" />
           </div>
@@ -75,7 +79,19 @@ function AnimatedContent({
 }: {
   currentSlide: number;
   animationKey: number;
-  slideshowData: any[];
+  slideshowData: Array<{
+    heading: string;
+    testimonial: {
+      text: string;
+      author: string;
+      role: string;
+      initials: string;
+    };
+    image: {
+      src: string;
+      alt: string;
+    };
+  }>;
 }) {
   const currentSlideData = slideshowData[currentSlide];
   const isRTL = useLocaleStore((state) => state.isRTL);

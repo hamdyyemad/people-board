@@ -7,12 +7,12 @@ type GlowRefs = {
 export function useGlowEffect() {
   const glowRefs = useRef<GlowRefs>({});
 
-  const setGlowRef = useCallback(
-    (roleId: string, el: HTMLDivElement | null) => {
-      glowRefs.current[roleId] = el;
-    },
-    []
-  );
+  // const setGlowRef = useCallback(
+  //   (roleId: string, el: HTMLDivElement | null) => {
+  //     glowRefs.current[roleId] = el;
+  //   },
+  //   []
+  // );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLElement>, roleId: string) => {

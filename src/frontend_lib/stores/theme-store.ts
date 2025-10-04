@@ -30,7 +30,7 @@ interface ThemeState {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       theme: "light",
       setTheme: (theme: Theme) => set({ theme }),
       toggleTheme: () =>

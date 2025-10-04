@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react";
+import { ArchiveX, File, Inbox, Send, Trash2 } from "lucide-react";
 
 import { NavUser } from "@/frontend_lib/components/nav-user";
 import { Label } from "@/frontend_lib/components/ui/label";
