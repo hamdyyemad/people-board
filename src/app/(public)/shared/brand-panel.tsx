@@ -1,8 +1,19 @@
+"use client";
+
 import { CompaniesSection } from "./components/companies-section";
 import { DecoratorWrapper } from "./components/decorator-wrapper";
 import { SlideshowContainer } from "./components/slideshow-container";
+import { useIsMobile } from "@/frontend_lib/hooks/use-mobile";
 
 export function BrandPanel() {
+  const isMobile = useIsMobile();
+
+  // Don't render anything on mobile to prevent network downloads
+  // Also don't render while the hook is still determining the screen size
+  if (isMobile === undefined || isMobile === true) {
+    return null;
+  }
+
   return (
     <DecoratorWrapper>
       <SlideshowContainer />
