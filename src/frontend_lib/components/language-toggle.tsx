@@ -27,14 +27,31 @@ export function LanguageToggle({
     const currentPath = window.location.pathname;
     const currentSearch = window.location.search;
     const newLanguage = isEnglish ? "ar" : "en";
+    const hostname = window.location.hostname;
 
-    // Try subdomain approach first, fallback to dev approach
+    // Check if we're on Vercel deployment
+    const isVercelDeployment = hostname.includes("vercel.app");
+
     let newUrl: string;
-    try {
-      newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
-    } catch {
-      // Fallback for development without hosts file
-      newUrl = buildDevSubdomainUrl(newLanguage, currentPath, currentSearch);
+
+    if (isVercelDeployment) {
+      // For Vercel, try subdomain approach
+      try {
+        newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
+      } catch {
+        // Fallback: use query parameter approach for Vercel
+        const url = new URL(window.location.href);
+        url.searchParams.set("lang", newLanguage);
+        newUrl = url.toString();
+      }
+    } else {
+      // For local development
+      try {
+        newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
+      } catch {
+        // Fallback for development without hosts file
+        newUrl = buildDevSubdomainUrl(newLanguage, currentPath, currentSearch);
+      }
     }
 
     // Redirect to new URL
