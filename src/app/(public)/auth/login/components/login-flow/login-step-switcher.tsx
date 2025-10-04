@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { RoleSelection } from "./role-based/role-selection";
 import { LoginFormWithRole } from "./form/login-form-with-role";
 import { useRoleSelection } from "../../hooks/use-role-selection";
@@ -11,22 +10,14 @@ export function LoginStepSwitcher() {
     handleRoleSelect: onRoleSelect,
     handleBack: onBack,
   } = useRoleSelection();
-  const [isFlipped, setIsFlipped] = useState(false);
 
-  const handleRoleSelect = (role: any) => {
-    setIsFlipped(true);
-    onRoleSelect(role);
-  };
+  // Derive isFlipped from selectedRole - no need for additional state
+  const isFlipped = selectedRole !== null;
 
-  const handleBack = () => {
-    setIsFlipped(false);
-    onBack();
-  };
-
-  const frontContent = <RoleSelection onContinue={handleRoleSelect} />;
+  const frontContent = <RoleSelection onContinue={onRoleSelect} />;
 
   const backContent = (
-    <LoginFormWithRole userRole={selectedRole || "HR"} onBack={handleBack} />
+    <LoginFormWithRole userRole={selectedRole || "HR"} onBack={onBack} />
   );
 
   return (

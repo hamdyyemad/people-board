@@ -13,6 +13,7 @@ export function FlipCard({
   frontContent,
   backContent,
 }: FlipCardProps) {
+
   return (
     <div className="relative">
       <style
@@ -30,6 +31,7 @@ export function FlipCard({
             min-height: 400px;
             transform-style: preserve-3d;
             transition: transform 0.6s ease-in-out;
+            cursor: pointer;
           }
           
           .flip-card.flipped {
