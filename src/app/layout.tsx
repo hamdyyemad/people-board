@@ -1,6 +1,7 @@
 import "./globals.css";
 import { geistSans, geistMono } from "@/frontend_lib/lib/fonts";
 import { metadata } from "@/frontend_lib/lib/metadata";
+import { ThemeProvider } from "@/frontend_lib/components/theme-provider";
 
 // Re-export metadata for Next.js
 export { metadata };
@@ -20,7 +21,7 @@ export default function RootLayout({
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
