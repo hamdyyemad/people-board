@@ -6,8 +6,16 @@ export function getLanguageFromSubdomain(): "en" | "ar" {
   if (typeof window === "undefined") return "en";
 
   const hostname = window.location.hostname;
-  const subdomain = hostname.split(".")[0];
+  const url = new URL(window.location.href);
 
+  // First, check for query parameter (fallback for Vercel)
+  const langParam = url.searchParams.get("lang");
+  if (langParam === "ar" || langParam === "en") {
+    return langParam;
+  }
+
+  // Then check subdomain
+  const subdomain = hostname.split(".")[0];
   return subdomain === "ar" ? "ar" : "en";
 }
 
