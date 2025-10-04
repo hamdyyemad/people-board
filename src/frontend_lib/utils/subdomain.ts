@@ -6,17 +6,19 @@ export function getLanguageFromSubdomain(): "en" | "ar" {
   if (typeof window === "undefined") return "en";
 
   const hostname = window.location.hostname;
-  const url = new URL(window.location.href);
+  const pathname = window.location.pathname;
 
-  // First, check for query parameter (fallback for Vercel)
-  const langParam = url.searchParams.get("lang");
-  if (langParam === "ar" || langParam === "en") {
-    return langParam;
+  // Check if we're on Vercel deployment
+  const isVercelDeployment = hostname.includes("vercel.app");
+
+  if (isVercelDeployment) {
+    // For Vercel: Check for /ar path
+    return pathname.startsWith("/ar") ? "ar" : "en";
+  } else {
+    // For local development or custom domains: Check subdomain
+    const subdomain = hostname.split(".")[0];
+    return subdomain === "ar" ? "ar" : "en";
   }
-
-  // Then check subdomain
-  const subdomain = hostname.split(".")[0];
-  return subdomain === "ar" ? "ar" : "en";
 }
 
 export function getSubdomainFromLanguage(language: "en" | "ar"): string {
@@ -31,16 +33,35 @@ export function buildSubdomainUrl(
   if (typeof window === "undefined") return "";
 
   const currentHostname = window.location.hostname;
-  const baseHostname = currentHostname.replace("ar.", "");
+  const isVercelDeployment = currentHostname.includes("vercel.app");
 
-  let hostname: string;
-  if (language === "ar") {
-    hostname = `ar.${baseHostname}`;
+  if (isVercelDeployment) {
+    // For Vercel: Use path-based routing
+    const protocol = window.location.protocol;
+    const host = window.location.host;
+
+    if (language === "ar") {
+      // Add /ar prefix to the path
+      const arPath = path.startsWith("/") ? `/ar${path}` : `/ar/${path}`;
+      return `${protocol}//${host}${arPath}${search}`;
+    } else {
+      // Remove /ar prefix if it exists
+      const cleanPath = path.replace(/^\/ar/, "") || "/";
+      return `${protocol}//${host}${cleanPath}${search}`;
+    }
   } else {
-    hostname = baseHostname;
-  }
+    // For local development or custom domains: Use subdomain routing
+    const baseHostname = currentHostname.replace("ar.", "");
+    let hostname: string;
 
-  return `http://${hostname}${path}${search}`;
+    if (language === "ar") {
+      hostname = `ar.${baseHostname}`;
+    } else {
+      hostname = baseHostname;
+    }
+
+    return `http://${hostname}${path}${search}`;
+  }
 }
 
 export function isSubdomainRoute(): boolean {

@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { getLanguageFromSubdomain } from "../utils/subdomain";
-import { buildSubdomainUrl } from "../utils/subdomain";
+import {
+  getLanguageFromSubdomain,
+  buildSubdomainUrl,
+} from "../utils/subdomain";
 import { buildDevSubdomainUrl } from "../utils/dev-subdomain";
 
 export function useAppTranslation() {
@@ -18,7 +20,7 @@ export function useAppTranslation() {
     });
   }
 
-  // Enhanced changeLanguage function that handles URL changes for Vercel
+  // Enhanced changeLanguage function that handles URL changes
   const changeLanguage = (newLanguage: "en" | "ar") => {
     if (typeof window === "undefined") return;
 
@@ -32,17 +34,10 @@ export function useAppTranslation() {
     let newUrl: string;
 
     if (isVercelDeployment) {
-      // For Vercel, try subdomain approach
-      try {
-        newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
-      } catch {
-        // Fallback: use query parameter approach for Vercel
-        const url = new URL(window.location.href);
-        url.searchParams.set("lang", newLanguage);
-        newUrl = url.toString();
-      }
+      // For Vercel: Use path-based routing (/ar)
+      newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
     } else {
-      // For local development
+      // For local development: Try subdomain, fallback to dev approach
       try {
         newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
       } catch {

@@ -35,17 +35,10 @@ export function LanguageToggle({
     let newUrl: string;
 
     if (isVercelDeployment) {
-      // For Vercel, try subdomain approach
-      try {
-        newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
-      } catch {
-        // Fallback: use query parameter approach for Vercel
-        const url = new URL(window.location.href);
-        url.searchParams.set("lang", newLanguage);
-        newUrl = url.toString();
-      }
+      // For Vercel: Use path-based routing (/ar)
+      newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
     } else {
-      // For local development
+      // For local development: Try subdomain, fallback to dev approach
       try {
         newUrl = buildSubdomainUrl(newLanguage, currentPath, currentSearch);
       } catch {

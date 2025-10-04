@@ -4,29 +4,41 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const url = request.nextUrl;
+  const pathname = url.pathname;
 
-  // Check if we're on Vercel and handle subdomain routing
+  // Check if we're on Vercel deployment
   const isVercelDeployment = hostname.includes("vercel.app");
 
   let locale = "en"; // default
+  let shouldRewrite = false;
 
-  // First, check for query parameter (fallback for Vercel)
-  const langParam = url.searchParams.get("lang");
-  if (langParam === "ar" || langParam === "en") {
-    locale = langParam;
-  } else if (isVercelDeployment) {
-    // For Vercel, check if the hostname starts with 'ar.'
+  if (isVercelDeployment) {
+    // For Vercel: Check for /ar path
+    if (pathname.startsWith("/ar")) {
+      locale = "ar";
+      // Rewrite /ar/... to /... for internal routing
+      const newPath = pathname.replace(/^\/ar/, "") || "/";
+      url.pathname = newPath;
+      shouldRewrite = true;
+    }
+  } else {
+    // For local development or custom domains: Check subdomain
     if (hostname.startsWith("ar.")) {
       locale = "ar";
     }
-  } else {
-    // For local development or custom domains
-    locale = hostname.startsWith("ar.") ? "ar" : "en";
   }
 
   // Clone the request headers
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-locale", locale);
+
+  if (shouldRewrite) {
+    return NextResponse.rewrite(url, {
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
 
   return NextResponse.next({
     request: {
