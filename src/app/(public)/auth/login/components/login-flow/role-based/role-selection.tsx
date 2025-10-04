@@ -43,13 +43,13 @@ export function RoleSelection({
   return (
     <div className="space-y-6">
       <div>
-        <h3
+        <h2
           className={`text-lg font-medium text-foreground mb-5 ${
             isRTL ? "text-right" : "text-left"
           }`}
         >
           {t("whoAreYou")}
-        </h3>
+        </h2>
         <ul className="grid w-full gap-6 md:grid-cols-2">
           {getRoleOptions(t).map((option) => (
             <RoleOption

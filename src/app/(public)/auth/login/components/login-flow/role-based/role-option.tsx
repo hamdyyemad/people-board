@@ -18,7 +18,12 @@ interface RoleOptionProps {
   onDoubleClick?: (role: UserRole) => void;
 }
 
-export function RoleOption({ option, isSelected, onSelect, onDoubleClick }: RoleOptionProps) {
+export function RoleOption({
+  option,
+  isSelected,
+  onSelect,
+  onDoubleClick,
+}: RoleOptionProps) {
   const { handleMouseMove, glowRefs } = useGlowEffect();
 
   const handleDoubleClick = () => {
@@ -84,7 +89,7 @@ export function RoleOption({ option, isSelected, onSelect, onDoubleClick }: Role
       />
       <label
         htmlFor={`${option.id.toLowerCase()}-option`}
-        className="hover-card inline-flex items-center justify-between w-full p-5 text-muted-foreground bg-background border-2 border-border rounded-lg cursor-pointer peer-checked:border-primary hover:text-foreground peer-checked:text-foreground hover:bg-muted/50 relative overflow-hidden"
+        className="hover-card inline-flex items-center justify-between w-full p-5 text-foreground bg-background border-2 border-border rounded-lg cursor-pointer peer-checked:border-primary hover:text-foreground peer-checked:text-foreground hover:bg-muted/50 relative overflow-hidden"
         style={{ "--glow-color": option.glowColor } as React.CSSProperties}
         onMouseMove={(e) => handleMouseMove(e, option.id)}
         onDoubleClick={handleDoubleClick}
@@ -109,8 +114,12 @@ export function RoleOption({ option, isSelected, onSelect, onDoubleClick }: Role
           >
             <path d={option.icon} />
           </svg>
-          <div className="w-full text-lg font-semibold">{option.label}</div>
-          <div className="w-full text-sm">{option.description}</div>
+          <div className="w-full text-lg font-semibold text-foreground">
+            {option.label}
+          </div>
+          <div className="w-full text-sm text-foreground/80">
+            {option.description}
+          </div>
         </div>
       </label>
     </li>

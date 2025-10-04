@@ -43,16 +43,21 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           ref={ref}
           type={showPassword ? "text" : "password"}
           placeholder={placeholder}
-          className={cn("h-12 pl-10 pr-10 bg-background", className)}
+          className={cn(
+            "h-12 pl-10 pr-12 bg-background min-h-[44px]",
+            className
+          )}
           {...props}
         />
         <button
           type="button"
           onClick={togglePasswordVisibility}
           className={cn(
-            "absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground",
+            "absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-2 min-w-[44px] min-h-[44px] flex items-center justify-center",
             toggleClassName
           )}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-pressed={showPassword}
         >
           {showPassword ? (
             <EyeOff className="h-4 w-4" />

@@ -13,7 +13,6 @@ export function FlipCard({
   frontContent,
   backContent,
 }: FlipCardProps) {
-
   return (
     <div className="relative">
       <style
@@ -73,9 +72,12 @@ export function FlipCard({
             <div className="flip-card-front">
               <div className="w-full">{frontContent}</div>
             </div>
-            <div className="flip-card-back">
-              <div className="w-full">{backContent}</div>
-            </div>
+            {/* Only render back content when flipped to avoid DOM pollution */}
+            {isFlipped && (
+              <div className="flip-card-back">
+                <div className="w-full">{backContent}</div>
+              </div>
+            )}
           </div>
         </div>
       </div>

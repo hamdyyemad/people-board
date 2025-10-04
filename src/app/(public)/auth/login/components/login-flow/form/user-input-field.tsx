@@ -37,7 +37,7 @@ export function UserInputField({
           id="userInput"
           type={inputType}
           placeholder={inputPlaceholder}
-          className="h-12 pl-10 bg-background"
+          className="h-12 pl-10 bg-background min-h-[44px]"
           required
         />
       </div>
