@@ -22,6 +22,50 @@ export function RoleOption({ option, isSelected, onSelect }: RoleOptionProps) {
 
   return (
     <li>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          .hover-card {
+            transform-style: preserve-3d;
+            transform: perspective(1000px);
+          }
+
+          .glow {
+            background: transparent;
+            pointer-events: none;
+            z-index: 1;
+          }
+
+          .glow-circle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(
+              circle at center,
+              rgba(var(--glow-color, 59, 130, 246), 0.5) 0%,
+              rgba(var(--glow-color, 59, 130, 246), 0) 80%
+            );
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s ease-out, left 0.1s ease-out, top 0.1s ease-out;
+            pointer-events: none;
+            mix-blend-mode: soft-light;
+            will-change: left, top;
+            left: 50%;
+            top: 50%;
+          }
+
+          .hover-card:hover .glow {
+            opacity: 1;
+          }
+
+          .hover-card:hover .glow-circle {
+            opacity: 1;
+          }
+        `,
+        }}
+      />
       <input
         type="radio"
         id={`${option.id.toLowerCase()}-option`}

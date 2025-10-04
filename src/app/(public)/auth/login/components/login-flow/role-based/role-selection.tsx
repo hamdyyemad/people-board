@@ -33,13 +33,21 @@ const roleOptions: RoleOptionData[] = [
   },
 ];
 
-export function RoleSelection() {
+interface RoleSelectionProps {
+  onContinue?: (role: UserRole) => void;
+}
+
+export function RoleSelection({ onContinue }: RoleSelectionProps) {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const { handleRoleSelect: onRoleSelect } = useRoleSelection();
 
   const handleContinue = () => {
     if (selectedRole) {
-      onRoleSelect(selectedRole);
+      if (onContinue) {
+        onContinue(selectedRole);
+      } else {
+        onRoleSelect(selectedRole);
+      }
     }
   };
 

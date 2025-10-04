@@ -8,12 +8,16 @@ import { SubmitButton } from "./submit-button";
 
 interface LoginFormWithRoleProps {
   userRole: UserRole;
+  onBack?: () => void;
 }
 
-export function LoginFormWithRole({ userRole }: LoginFormWithRoleProps) {
+export function LoginFormWithRole({
+  userRole,
+  onBack,
+}: LoginFormWithRoleProps) {
   return (
     <div className="space-y-6">
-      <BackButton />
+      <BackButton onBack={onBack} />
 
       <form className="space-y-4">
         <UserInputField userRole={userRole} />
