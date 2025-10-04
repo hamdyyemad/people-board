@@ -1,7 +1,6 @@
 import "./globals.css";
 import { geistSans, geistMono } from "@/frontend_lib/lib/fonts";
 import { metadata } from "@/frontend_lib/lib/metadata";
-import HRDashboardLayout from "./shared/hr-dashboard-layout";
 
 // Re-export metadata for Next.js
 export { metadata };
@@ -16,8 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <HRDashboardLayout>{children}</HRDashboardLayout>
+        {children}
       </body>
     </html>
   );
