@@ -11,7 +11,7 @@ export function LoginFormPanel() {
         <LanguageToggleServer />
         <ThemeToggle />
       </div>
-      <div className="mt-auto w-full max-w-md md:space-y-8">
+      <div className="mt-auto xl:my-auto w-full max-w-md md:space-y-8">
         {/* Logo */}
         <div className="mb-12" dir="ltr">
           <Logo showText={true} size="md" />
