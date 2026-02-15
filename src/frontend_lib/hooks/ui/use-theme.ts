@@ -1,4 +1,4 @@
-import { useThemeStore } from "../stores/theme-store";
+import { useThemeStore } from "@/frontend_lib/stores/theme-store";
 
 export function useTheme() {
   const { theme, setTheme, toggleTheme } = useThemeStore();

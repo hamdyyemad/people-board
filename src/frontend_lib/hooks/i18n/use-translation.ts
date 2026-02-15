@@ -2,8 +2,8 @@ import { useTranslation } from "react-i18next";
 import {
   getLanguageFromSubdomain,
   buildSubdomainUrl,
-} from "../utils/subdomain";
-import { buildDevSubdomainUrl } from "../utils/dev-subdomain";
+} from "@/frontend_lib/utils/subdomain";
+import { buildDevSubdomainUrl } from "@/frontend_lib/utils/dev-subdomain";
 
 export function useAppTranslation() {
   const { t, i18n } = useTranslation("common");
