@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compiler: {
+    // This removes console.log, but keeps console.error/warn
+    // so you still see actual crashes in production.
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
 };
 
 export default nextConfig;

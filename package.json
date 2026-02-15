@@ -54,7 +54,7 @@
     "i18next": "^25.5.3",
     "i18next-browser-languagedetector": "^8.2.0",
     "lucide-react": "^0.544.0",
-    "next": "15.5.4",
+    "next": "15.5.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-i18next": "^16.0.0",
@@ -68,10 +68,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "postcss": "^8.5.6",
     "tailwindcss": "3.4.17",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b"
 }

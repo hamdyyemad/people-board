@@ -1,15 +1,11 @@
+import { geistSans, geistMono, metadata, getLocale } from "@/frontend_lib/lib";
+
+import { ThemeProvider, LocaleProvider } from "@/frontend_lib/components/providers";
+
 import "./globals.css";
-import { geistSans, geistMono } from "@/frontend_lib/lib/fonts";
-import { metadata } from "@/frontend_lib/lib/metadata";
-import { ThemeProvider } from "@/frontend_lib/components/theme-provider";
-import { LocaleProvider } from "@/frontend_lib/components/locale-provider";
-import { getLocale } from "@/frontend_lib/lib/i18n";
 
 // Re-export metadata for Next.js
 export { metadata };
-
-// Import debug utilities to activate console override
-import "@/frontend_lib/utils/debug-init";
 
 export default async function RootLayout({
   children,

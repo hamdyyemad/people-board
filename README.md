@@ -204,7 +204,7 @@ function MyComponent() {
 
    ```tsx
    // Server Component - fetches translations
-   import { getTranslations } from "@/frontend_lib/lib/i18n";
+   import { getTranslations } from "@/frontend_lib/lib";
    import { MyComponent } from "./my-component";
 
    export async function MyComponentServer() {
