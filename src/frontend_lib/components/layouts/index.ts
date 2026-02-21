@@ -1,4 +1,7 @@
 export { AuthWrapper } from "./auth-wrapper";
 export { AppSidebar } from "./app-sidebar";
-export { NavMain } from "./nav-main";
-export { NavUser } from "./nav-user";
+export { NavbarActions } from "./navbar-actions";
+export { UserDropdown } from "./user-dropdown";
+export { DashboardShell } from "./dashboard-shell";
+export { Navbar } from "./app-navbar";
+export { SecondaryNav } from "./secondary-nav";

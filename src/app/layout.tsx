@@ -1,6 +1,7 @@
 import { geistSans, geistMono, metadata, getLocale } from "@/frontend_lib/lib";
 
 import { ThemeProvider, LocaleProvider } from "@/frontend_lib/components/providers";
+import { Head } from "@/frontend_lib/components/shared";
 
 import "./globals.css";
 
@@ -16,10 +17,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
-      <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-      </head>
+      <Head />
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <LocaleProvider initialLocale={locale}>
           <ThemeProvider>{children}</ThemeProvider>

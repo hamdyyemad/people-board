@@ -1,50 +1,33 @@
-import { AppSidebar } from "./app-sidebar";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/frontend_lib/components/ui/breadcrumb";
-import { Separator } from "@/frontend_lib/components/ui/separator";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/frontend_lib/components/ui/sidebar";
+import { AppSidebar, Navbar, SecondaryNav } from ".";
+import { Banner } from "../shared";
+import { SidebarInset, SidebarProvider } from "@/frontend_lib/components/ui/sidebar";
 
 interface DashboardShellProps {
-    children: React.ReactNode;
-    rootLabel: string;      // e.g., "Employee Portal" or "HR Management"
-    rootHref?: string;
-    currentPage: string;    // e.g., "Dashboard" or "Inbox"
-    role: "EMPLOYEE" | "HR"; // To control what the sidebar shows
+  children: React.ReactNode;
+  user?: { name: string; email: string; avatar: string };
 }
 
 export function DashboardShell({
-    children,
-    rootLabel,
-    rootHref = "#",
-    currentPage,
-    role
+  children,
 }: DashboardShellProps) {
-    return (
-        <SidebarProvider style={{ "--sidebar-width": "350px" } as React.CSSProperties}>
-            {/* Pass the role to the sidebar so it knows which menu to render */}
-            <AppSidebar role={role} />
 
-            <SidebarInset>
-                <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background p-4 z-10">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator orientation="vertical" className="mr-2 h-4" />
+  return (
+    <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": "230px" } as React.CSSProperties}>
+      <AppSidebar />
 
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href={rootHref}>{rootLabel}</BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden md:block" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>{currentPage}</BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </header>
+      <SidebarInset>
+        <Navbar />
 
-                <main className="p-4">
-                    {children}
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
-    );
+        <div className="flex min-h-0 flex-1 flex-col p-4">
+          <SecondaryNav />
+          <div className="min-h-0 flex-1">
+            <main className="-m-4 flex flex-1 flex-col">
+              <Banner />
+              {children}
+            </main>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }

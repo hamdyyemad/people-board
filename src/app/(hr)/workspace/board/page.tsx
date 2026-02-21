@@ -5,23 +5,17 @@ export default function HRDashboardPage() {
         <div className="rounded-xl bg-muted/50 p-6">
           <h3 className="text-lg font-semibold mb-2">Total Employees</h3>
           <p className="text-3xl font-bold text-primary">248</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            +12 from last month
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">+12 from last month</p>
         </div>
         <div className="rounded-xl bg-muted/50 p-6">
           <h3 className="text-lg font-semibold mb-2">On Leave Today</h3>
           <p className="text-3xl font-bold text-primary">15</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            3 pending approvals
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">3 pending approvals</p>
         </div>
         <div className="rounded-xl bg-muted/50 p-6">
           <h3 className="text-lg font-semibold mb-2">Open Positions</h3>
           <p className="text-3xl font-bold text-primary">8</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            2 closing this week
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">2 closing this week</p>
         </div>
       </div>
       <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 p-6">
