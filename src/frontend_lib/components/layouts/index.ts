@@ -1,7 +1,16 @@
-export { AuthWrapper } from "./auth-wrapper";
-export { AppSidebar } from "./app-sidebar";
-export { NavbarActions } from "./navbar-actions";
-export { UserDropdown } from "./user-dropdown";
+/**
+ * LAYOUT SHELLS
+ * High-level page wrappers that define the structural 
+ * frame for specific application states.
+ */
+export { AuthShell } from "./auth-shell";
 export { DashboardShell } from "./dashboard-shell";
-export { Navbar } from "./app-navbar";
-export { SecondaryNav } from "./secondary-nav";
+
+/**
+ * NAVIGATION COMPONENTS
+ * Structural components responsible for wayfinding 
+ * and persistent application headers.
+ */
+export { AppSidebar } from "./sidebar/app-sidebar";
+export { AppNavbar as Navbar } from "./navbar/primary/app-navbar";
+export { SecondaryNav } from "./navbar/secondary/secondary-nav";

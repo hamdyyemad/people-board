@@ -1,8 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { cn } from "@/frontend_lib/utils/utils";
+import { getSidebarItemsForPath } from "@/frontend_lib/utils/navigation";
+
+import { usePathname } from "next/navigation";
+
 import { Logo } from "@/frontend_lib/components/shared/branding/logo";
 import {
   Sidebar,
@@ -14,8 +18,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/frontend_lib/components/ui/sidebar";
-import { cn } from "@/frontend_lib/utils/utils";
-import { getSidebarItemsForPath } from "@/frontend_lib/utils/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (

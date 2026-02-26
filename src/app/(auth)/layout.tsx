@@ -1,5 +1,5 @@
 import { BrandPanel } from "@/frontend_lib/components/features/auth";
-import { AuthWrapper } from "@/frontend_lib/components/layouts";
+import { AuthShell } from "@/frontend_lib/components/layouts";
 import { getTranslations } from "@/frontend_lib/lib";
 /**
  * PublicLayout
@@ -22,9 +22,9 @@ export default async function AuthLayout({
   return (
     <div className="min-h-screen w-full lg:grid lg:grid-cols-2 md:overflow-hidden">
       {/* Authentication Form */}
-      <AuthWrapper>
+      <AuthShell>
         {children}
-      </AuthWrapper>
+      </AuthShell>
 
       {/* Brand Slideshow */}
       <BrandPanel translations={translations} />

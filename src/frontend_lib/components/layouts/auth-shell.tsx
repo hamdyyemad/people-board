@@ -6,7 +6,7 @@ interface AuthWrapperProps {
     children: React.ReactNode;
 }
 
-export async function AuthWrapper({ children }: AuthWrapperProps) {
+export async function AuthShell({ children }: AuthWrapperProps) {
     const translations = await getTranslations();
 
     return (

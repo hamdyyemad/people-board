@@ -1,2 +1,1 @@
-export { USFlag } from "./us-flag";
-export { EgyptFlag } from "./egypt-flag";
+export { Flag, type FlagCode } from "./flag-factory";

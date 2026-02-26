@@ -5,10 +5,9 @@ import { Card, CardContent } from "@/frontend_lib/components/ui/card";
 import { Button } from "@/frontend_lib/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/frontend_lib/components/ui/avatar";
 import { Clock, LogIn, LogOut } from "lucide-react";
+import { AVATAR_IMAGE } from "@/frontend_lib/data/demo-avatar";
 
 // --- Constants & Data ---
-const AVATAR_IMAGE = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80";
-
 const EMPLOYEE = {
   id: "ZY198",
   name: "Christine Spalding",
@@ -41,8 +40,8 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex flex-1 flex-col gap-6 bg-muted/30 p-4 md:flex-row md:gap-8 md:p-6">
       <aside className="w-full shrink-0 md:w-80 lg:w-96">
-        <Card className="relative -mt-16 overflow-hidden border bg-card shadow-lg">
-          <CardContent className="p-6">
+        <Card className="relative -mt-16 overflow-visible border bg-card shadow-lg">
+          <CardContent className="p-6 pt-16">
             <ProfileHeader />
             <AttendanceTimer />
             <OrgHierarchy />
@@ -62,41 +61,94 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
  * AttendanceTimer: Isolated state and effect.
  * Only this component re-renders every second.
  */
-function AttendanceTimer() {
+/**
+ * ATTENDANCE TIMER SHELL
+ * Main container that manages the "checkedIn" state.
+ */
+export function AttendanceTimer() {
   const [checkedIn, setCheckedIn] = useState(true);
-  const [timerSeconds, setTimerSeconds] = useState(7 * 3600 + 26 * 60 + 27);
-
-  useEffect(() => {
-    if (!checkedIn) return;
-    const id = setInterval(() => setTimerSeconds((prev) => prev + 1), 1000);
-    return () => clearInterval(id);
-  }, [checkedIn]);
 
   return (
     <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
+      {/* 1. The Logic-Heavy Timer */}
       <div className="flex items-center justify-center gap-2 text-2xl font-mono tabular-nums text-foreground">
         <Clock className="h-6 w-6 text-muted-foreground" />
-        {formatTimer(timerSeconds)}
+        <TimerDisplay isActive={checkedIn} />
       </div>
-      <Button
-        className="mt-3 w-full"
-        variant={checkedIn ? "destructive" : "default"}
-        onClick={() => setCheckedIn(!checkedIn)}
-      >
-        {checkedIn ? (
-          <><LogOut className="mr-2 h-4 w-4" /> Check-out</>
-        ) : (
-          <><LogIn className="mr-2 h-4 w-4" /> Check-in</>
-        )}
-      </Button>
+      {/* 2. The Action Button */}
+      <AttendanceActionButton 
+        checkedIn={checkedIn} 
+        onClick={() => setCheckedIn(!checkedIn)} 
+      />
     </div>
+  );
+}
+
+// --- Internal Components ---
+
+/**
+ * Handles the tick-logic and formatting.
+ * Logic is encapsulated here so the Shell doesn't re-render 
+ * its other children every second.
+ */
+function TimerDisplay({ isActive }: { isActive: boolean }) {
+  const [seconds, setSeconds] = useState(7 * 3600 + 26 * 60 + 27);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [isActive]);
+
+  const formatTime = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600).toString().padStart(2, "0");
+    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, "0");
+    const s = (totalSeconds % 60).toString().padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  };
+
+  return (
+    <>
+      {formatTime(seconds)}
+    </>
+  );
+}
+
+/**
+ * Purely presentational button that handles icon switching.
+ */
+function AttendanceActionButton({ 
+  checkedIn, 
+  onClick 
+}: { 
+  checkedIn: boolean; 
+  onClick: () => void; 
+}) {
+  return (
+    <Button
+      className="mt-3 w-full"
+      variant={checkedIn ? "destructive" : "default"}
+      onClick={onClick}
+    >
+      {checkedIn ? (
+        <>
+          <LogOut className="mr-2 h-4 w-4" /> 
+          Check-out
+        </>
+      ) : (
+        <>
+          <LogIn className="mr-2 h-4 w-4" /> 
+          Check-in
+        </>
+      )}
+    </Button>
   );
 }
 
 function ProfileHeader() {
   return (
-    <div className="flex flex-col items-center text-center">
-      <Avatar className="h-24 w-24 border-4 border-card shadow-md">
+    <div className="-mt-32 flex flex-col items-center text-center">
+      <Avatar className="h-32 w-32 rounded-full border border-border/70 bg-card shadow-sm">
         <AvatarImage src={EMPLOYEE.avatar} alt={EMPLOYEE.name} />
         <AvatarFallback className="text-lg">
           {EMPLOYEE.name.slice(0, 2).toUpperCase()}

@@ -1,5 +1,5 @@
 import { AppSidebar, Navbar, SecondaryNav } from ".";
-import { Banner } from "../shared";
+import { Banner } from "@/frontend_lib/components/shared";
 import { SidebarInset, SidebarProvider } from "@/frontend_lib/components/ui/sidebar";
 
 interface DashboardShellProps {
