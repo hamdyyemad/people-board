@@ -27,14 +27,6 @@ const REPORTEES = [
   { id: "ZY204", name: "Randall Gladstone", avatar: AVATAR_IMAGE, status: "Present" as const },
 ];
 
-// --- Utilities ---
-function formatTimer(seconds: number) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return `${String(h).padStart(2, "0")} : ${String(m).padStart(2, "0")} : ${String(s).padStart(2, "0")}`;
-}
-
 // --- Main Export ---
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   return (

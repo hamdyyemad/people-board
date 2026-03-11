@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/frontend_lib/utils/utils";
 
 export type FlagCode = "us" | "eg";
@@ -40,7 +41,7 @@ export function Flag({
         )}
         style={{ width: size, height: size }}
       >
-        <img
+        <Image
           src={src}
           alt=""
           role="presentation"
@@ -54,7 +55,7 @@ export function Flag({
 
   return (
     <span className={cn("inline-block shrink-0", className)}>
-      <img
+      <Image
         src={src}
         alt=""
         role="presentation"

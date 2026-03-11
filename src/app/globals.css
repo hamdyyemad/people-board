@@ -116,3 +116,10 @@ a {
     background: radial-gradient(circle, var(--tw-gradient-stops));
   }
 }
+
+/* Override Radix UI Dialog scroll lock margin with maximum specificity */
+body[data-scroll-locked],
+body[data-scroll-locked][style] {
+  margin-right: 0px !important;
+  padding-right: 0px !important;
+}

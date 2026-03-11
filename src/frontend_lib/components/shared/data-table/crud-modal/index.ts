@@ -1,0 +1,10 @@
+export { CrudModalFactory } from "./factory/crud-modal-factory";
+export { ModalShell } from "./shared/modal-shell";
+export { ModalFooter } from "./shared/modal-footer";
+export { ViewModalBody } from "./products/view-modal-body";
+export { FormModalBody } from "./products/form-modal-body";
+export { DeleteModalBody } from "./products/delete-modal-body";
+export { useCrudModal } from "./hooks/use-crud-modal";
+export type { CrudModalControls } from "./hooks/use-crud-modal";
+export type { CrudOperation, CrudModalState, CrudModalActions, ModalBodyProps } from "./types";
+export type { FormField } from "./products/form-modal-body";

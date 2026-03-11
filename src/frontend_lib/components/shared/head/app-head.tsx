@@ -1,3 +1,5 @@
+import Head from "next/head";
+
 const themeScript = `
   (function(){
     var k='theme-storage';
@@ -13,12 +15,12 @@ const themeScript = `
   })();
 `;
 
-export function Head() {
+export function AppHead() {
   return (
-    <head>
+    <Head>
       <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    </head>
+    </Head>
   );
 }

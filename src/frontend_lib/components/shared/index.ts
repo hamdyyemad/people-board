@@ -1,4 +1,4 @@
-export { Head } from "./head/app-head";
+export { AppHead as Head } from "./head/app-head";
 export { Logo } from "./branding/logo";
 export { Banner } from "./branding/banner";
 export { ThemeToggle } from "./theme/theme-toggle";

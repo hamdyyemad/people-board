@@ -1,0 +1,95 @@
+"use client";
+
+import { ColumnDef } from "@tanstack/react-table";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/frontend_lib/components/ui/dropdown-menu";
+import { Badge } from "@/frontend_lib/components/ui/badge";
+import { DataTableColumnHeader } from "@/frontend_lib/components/shared/data-table";
+import { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
+import { Department } from "./departments";
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export const departmentsColumns: ColumnDef<Department>[] = [
+  {
+    accessorKey: "name",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Department Name" />,
+    cell: ({ row }) => (
+      <div className="font-medium text-foreground">{row.getValue("name")}</div>
+    ),
+  },
+  {
+    accessorKey: "parent_name",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Parent Department" />,
+    cell: ({ row }) => {
+      const parent = row.getValue("parent_name") as string | null;
+      return parent ? (
+        <Badge variant="outline" className="font-normal">
+          {parent}
+        </Badge>
+      ) : (
+        <span className="text-muted-foreground text-sm">—</span>
+      );
+    },
+    filterFn: (row, id, value: string[]) => {
+      const val = row.getValue(id) as string | null;
+      return value.includes(val ?? "none");
+    },
+  },
+  {
+    accessorKey: "employee_count",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Employees" />,
+    cell: ({ row }) => (
+      <div className="font-medium tabular-nums">
+        {(row.getValue("employee_count") as number).toLocaleString()}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "created_at",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {formatDate(row.getValue("created_at"))}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "updated_at",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Last Updated" />,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {formatDate(row.getValue("updated_at"))}
+      </span>
+    ),
+  },
+];
+
+export function makeDepartmentRowActions(
+  onAction: (op: CrudOperation, row: Department) => void
+) {
+  return function DepartmentRowActions(row: Department) {
+    return (
+      <>
+        <DropdownMenuItem onClick={() => onAction("view", row)}>
+          View details
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAction("edit", row)}>
+          Edit department
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => onAction("delete", row)}
+        >
+          Delete
+        </DropdownMenuItem>
+      </>
+    );
+  };
+}

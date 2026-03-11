@@ -1,4 +1,13 @@
-import { LayoutDashboard, Inbox, FileText, Send, ArchiveX, Trash2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  Inbox,
+  FileText,
+  Send,
+  ArchiveX,
+  Trash2,
+  Briefcase,
+  Building2,
+} from "lucide-react";
 
 import { NavSection } from "@/frontend_lib/types/navigation";
 
@@ -33,6 +42,8 @@ export const NAV_SECTIONS: NavSection[] = [
     rootLabel: "HR Management",
     sidebar: [
       { title: "Board", path: "/workspace/board", icon: Inbox },
+      { title: "Jobs", path: "/workspace/jobs", icon: Briefcase },
+      { title: "Departments", path: "/workspace/departments", icon: Building2 },
       { title: "Drafts", path: "/workspace/drafts", icon: FileText },
       { title: "Sent", path: "/workspace/sent", icon: Send },
       { title: "Junk", path: "/workspace/junk", icon: ArchiveX },
@@ -40,6 +51,8 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
     secondaryTabsByParent: {
       "/workspace/board": [],
+      "/workspace/jobs": [],
+      "/workspace/departments": [],
       "/workspace/drafts": [],
       "/workspace/sent": [],
       "/workspace/junk": [],
