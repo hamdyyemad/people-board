@@ -4,6 +4,10 @@ A fully-featured, generic data table built on `@tanstack/react-table` v8.
 
 **Location:** `src/frontend_lib/components/shared/DataTable/`
 
+**⚠️ Current Status:** Client-side only. See [Server-Side Migration Plan](../../general/migration/SERVER-SIDE-DATATABLE-MIGRATION.md) for planned backend integration.
+
+**🚀 Future:** Will be extracted as a standalone npm library package.
+
 ---
 
 ## File structure
