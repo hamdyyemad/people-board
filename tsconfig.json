@@ -19,7 +19,14 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/backend_lib/exceptions": ["./src/backend_lib/shared/exceptions"],
+      "@/backend_lib/exceptions/*": ["./src/backend_lib/shared/exceptions/*"],
+      "@/backend_lib/types/*": ["./src/backend_lib/shared/http/types/*"],
+      "@/backend_lib/http/*": ["./src/backend_lib/shared/http/*"],
+      "@/backend_lib/middlewares": ["./src/backend_lib/shared/middlewares"],
+      "@/backend_lib/middlewares/*": ["./src/backend_lib/shared/middlewares/*"],
+      "@/backend_lib/utils/*": ["./src/backend_lib/shared/utils/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "scripts/database/run-migrations.js"],
