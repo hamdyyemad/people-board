@@ -1,5 +1,6 @@
 import { DepartmentName } from "../value-objects/department-name";
 import { DepartmentCreatedEvent } from '../events/department/department-created';
+import { DEPARTMENT_MESSAGES } from '../constants/department';
 
 /**
  * Department Entity
@@ -36,9 +37,9 @@ export class Department {
   }
 
   private validate(): void {
-    if (!this.id) throw new Error('Department ID cannot be empty');
+    if (!this.id) throw new Error(DEPARTMENT_MESSAGES.ID_EMPTY);
     if (this.parentId === this.id) {
-      throw new Error('Department cannot be its own parent');
+      throw new Error(DEPARTMENT_MESSAGES.OWN_PARENT);
     }
   }
 

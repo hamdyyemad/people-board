@@ -7,12 +7,14 @@ backend_lib/
   modules/
     core/
       domain/              # Innermost layer — pure business logic
+        constants/          # Single source of truth for rule values & messages (see below)
         entities/           # Mutable domain objects (Department, Employee, etc.)
         value-objects/      # Immutable typed values (DepartmentName, Email, etc.)
         events/             # Domain events (DepartmentCreated, etc.)
         ports/              # Interfaces/contracts that outer layers must implement
           repositories/     # Repository interfaces (IDepartmentRepository, etc.)
         exceptions/         # Domain-specific error types
+      validation/           # Zod schemas for API request/response (depends on domain)
       application/          # Use cases and orchestration
         use-cases/          # Single-responsibility command/query handlers
         services/           # Façades that group related use cases
@@ -63,6 +65,33 @@ The fundamental rule of Clean Architecture: **dependencies point inward only**.
 - `application/` imports from `domain/` only (entities, value objects, port interfaces)
 - `infrastructure/` imports from `domain/` (to implement the port interfaces)
 - `application/` NEVER imports concrete classes from `infrastructure/`
+
+## Domain constants and shared rules
+
+The same business rule often appears in several places: **database** (migrations, constraints), **domain** (value objects and entity validation), and **validation layer** (Zod schemas at the API boundary). To avoid drift and duplication, **rule values and messages live in the domain** as the single source of truth.
+
+### Where: `domain/constants/`
+
+Each aggregate or bounded context can have a constants file, e.g. `domain/constants/department.ts`, that exports:
+
+- **Numeric/string limits** used by value objects, Zod schemas, and (when applicable) DB constraints: e.g. `DEPARTMENT_NAME.MIN_LENGTH`, `DEPARTMENT_NAME.MAX_LENGTH`.
+- **Error messages** used by value objects, entities, and Zod: e.g. `DEPARTMENT_NAME_MESSAGES.EMPTY`, `DEPARTMENT_MESSAGES.OWN_PARENT`.
+
+The **invariant logic** (e.g. “department cannot be its own parent”) stays in the **entity**; only the **message text** is shared so it stays consistent everywhere.
+
+### Who depends on it
+
+| Consumer | Uses |
+|----------|------|
+| **Value objects** (e.g. `DepartmentName`) | `DEPARTMENT_NAME.*` limits and `DEPARTMENT_NAME_MESSAGES.*` in their `validate()` methods. |
+| **Entities** (e.g. `Department`) | `DEPARTMENT_MESSAGES.*` for error messages in entity validation. |
+| **Validation layer** (`modules/core/validation/`) | Same limits and messages in Zod schemas so API validation matches domain rules and returns the same wording. |
+| **Database migrations** | SQL cannot import TypeScript. Document in migration comments that constraints (e.g. `CHECK (char_length(name) <= 255)`) must stay in sync with `domain/constants/` (e.g. `DEPARTMENT_NAME.MAX_LENGTH`). When adding or changing constraints, update the constant and the migration together. |
+
+### Dependency direction
+
+- **Validation** and **application** depend on **domain** (including `domain/constants/`).
+- **Domain** does not depend on validation or application. Constants are just data; they live in the domain so the domain remains the single source of truth and all outer layers align with it.
 
 ## Dependency Injection
 
@@ -220,12 +249,13 @@ That's the entire point of Clean Architecture: the framework is a detail.
 ## How to Add a Feature
 
 1. Define/update the **domain entity** and any value objects
-2. Define the **port interface** in `domain/ports/` if new persistence is needed
-3. Create the **use case** in `application/use-cases/`
-4. Expose it through a **service method** in `application/services/`
-5. Implement the **repository** in `infrastructure/repository/`
-6. Register it in **composition-root.ts** (wire interface → implementation)
-7. Call the service from the **API route**
+2. If a business rule (limits, messages) is shared by value objects, entities, and API validation, add or reuse constants in **`domain/constants/`** so one place drives all three (and document DB constraints in migrations).
+3. Define the **port interface** in `domain/ports/` if new persistence is needed
+4. Create the **use case** in `application/use-cases/`
+5. Expose it through a **service method** in `application/services/`
+6. Implement the **repository** in `infrastructure/repository/`
+7. Register it in **composition-root.ts** (wire interface → implementation)
+8. Call the service from the **API route**
 
 ## Example: Department Creation Flow
 

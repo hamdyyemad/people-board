@@ -10,6 +10,7 @@ export {
   type FrameworkResponse,
   getPath,
   getHeader,
+  getBody,
   createJsonResponse,
   setResponseHeader,
   type JsonResponseOptions,

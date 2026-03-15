@@ -17,6 +17,14 @@ export function getHeader(request: NextRequest, name: string): string | null {
   return request.headers.get(name);
 }
 
+/**
+ * Reads and parses the request body as JSON.
+ * Rejects (throws) on invalid JSON so callers can map to 400.
+ */
+export async function getBody(request: NextRequest): Promise<unknown> {
+  return request.json();
+}
+
 export interface JsonResponseOptions {
   status?: number;
   headers?: Record<string, string>;

@@ -51,6 +51,8 @@
 //💡 Common DDD rule: 
 // Entities are mutable, but Value Objects are immutable.
 // ==================================================================
+import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../constants/department';
+
 export class DepartmentName {
   readonly value: string;
 
@@ -61,10 +63,10 @@ export class DepartmentName {
 
   private validate(value: string): void {
     if (!value || value.trim().length === 0) {
-      throw new Error('Department name cannot be empty');
+      throw new Error(DEPARTMENT_NAME_MESSAGES.EMPTY);
     }
-    if (value.trim().length > 255) {
-      throw new Error('Department name cannot exceed 255 characters');
+    if (value.trim().length > DEPARTMENT_NAME.MAX_LENGTH) {
+      throw new Error(DEPARTMENT_NAME_MESSAGES.TOO_LONG);
     }
   }
 
