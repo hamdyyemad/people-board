@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
 import { FilterFn, Row } from "@tanstack/react-table";
@@ -10,13 +10,17 @@ function exportToCSV<TData>(rows: Row<TData>[], filename: string) {
   saveAs(blob, `${filename}.csv`);
 }
 
-function exportToXLSX<TData>(rows: Row<TData>[], filename: string) {
-  const data = rows.map((row) => row.original);
-  const worksheet = XLSX.utils.json_to_sheet(data as object[]);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([excelBuffer], {
+async function exportToXLSX<TData>(rows: Row<TData>[], filename: string): Promise<void> {
+  const data = rows.map((row) => row.original) as Record<string, unknown>[];
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Sheet1");
+  if (data.length > 0) {
+    const headers = Object.keys(data[0]);
+    worksheet.addRow(headers);
+    data.forEach((row) => worksheet.addRow(Object.values(row)));
+  }
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   saveAs(blob, `${filename}.xlsx`);

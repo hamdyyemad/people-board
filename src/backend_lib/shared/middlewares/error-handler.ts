@@ -29,12 +29,18 @@ export function withErrorHandler<T = unknown>(
 
       console.error('Unhandled error in route handler:', error);
 
+      // Never send raw error.message to the client (can leak paths, stack, or DB details)
+      const isProduction = process.env.NODE_ENV === 'production';
+      const safeDetail = isProduction
+        ? 'An unexpected error occurred.'
+        : (error instanceof Error ? error.message : 'Internal server error');
+
       return createErrorResponseFromDetails(
         request,
         'https://api.example.com/problems/internal-server-error',
         'Internal Server Error',
         500,
-        error instanceof Error ? error.message : 'Internal server error'
+        safeDetail
       );
     }
   };

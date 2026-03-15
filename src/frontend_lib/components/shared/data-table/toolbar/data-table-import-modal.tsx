@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import {
   CheckCircle2,
   Download,
@@ -20,7 +20,6 @@ import {
 } from "@/frontend_lib/components/ui/dialog";
 import { Button } from "@/frontend_lib/components/ui/button";
 import { cn } from "@/frontend_lib/utils/utils";
-import { exportToXLSX } from "../utils";
 
 type ImportStep = "upload" | "validate" | "confirm";
 
@@ -77,12 +76,12 @@ export default function DataTableImportModal<TData>({
   }
 
   // ── Template download ──────────────────────────────────────────────────────
-  function downloadTemplate() {
-    const ws = XLSX.utils.aoa_to_sheet([templateColumns]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, entityName);
-    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([buf], {
+  async function downloadTemplate() {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(entityName);
+    worksheet.addRow(templateColumns);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
     const url = URL.createObjectURL(blob);
@@ -109,9 +108,28 @@ export default function DataTableImportModal<TData>({
   async function runValidation() {
     if (!file) return;
     const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buf);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      setValidation({ valid: [], errors: [{ row: 0, message: "The file has no worksheets." }] });
+      setStep("validate");
+      return;
+    }
+    const rows: Record<string, unknown>[] = [];
+    let headers: string[] = [];
+    worksheet.eachRow((row, rowNumber) => {
+      const values = row.values as (unknown | undefined)[];
+      if (rowNumber === 1) {
+        headers = (values.slice(1) as string[]).map((v) => String(v ?? ""));
+      } else {
+        const obj: Record<string, unknown> = {};
+        headers.forEach((h, i) => {
+          obj[h] = values[i + 1] ?? "";
+        });
+        rows.push(obj);
+      }
+    });
 
     const errors: { row: number; message: string }[] = [];
     const valid: TData[] = [];
