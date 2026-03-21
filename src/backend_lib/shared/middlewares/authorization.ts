@@ -9,15 +9,17 @@ import type { FrameworkRequest, FrameworkResponse } from '../adapters/current';
 
 /**
  * Authorization middleware wrapper
+ * Supports both static and dynamic routes with full type safety
  * TODO: Implement actual authorization logic
  */
-export function withAuthorization(
-  handler: (request: FrameworkRequest) => Promise<FrameworkResponse>
+export function withAuthorization<P = any>(
+  handler: (request: FrameworkRequest, ...rest: any[]) => Promise<FrameworkResponse>
 ) {
   return async (
-    request: FrameworkRequest
+    request: FrameworkRequest,
+    ...rest: any[]
   ): Promise<FrameworkResponse> => {
     // TODO: Implement authorization
-    return handler(request);
+    return handler(request, ...rest);
   };
 }

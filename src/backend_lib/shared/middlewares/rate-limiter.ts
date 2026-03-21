@@ -11,12 +11,14 @@ import { createErrorResponseFromDetails } from '../http/response';
 
 /**
  * Rate limiting middleware wrapper
+ * Supports both static and dynamic routes with full type safety
  */
-export function withRateLimit(
-  handler: (request: FrameworkRequest) => Promise<FrameworkResponse>
+export function withRateLimit<P = any>(
+  handler: (request: FrameworkRequest, ...rest: any[]) => Promise<FrameworkResponse>
 ) {
   return async (
-    request: FrameworkRequest
+    request: FrameworkRequest,
+    ...rest: any[]
   ): Promise<FrameworkResponse> => {
     const clientId = getClientId(request);
     const rateLimit = checkRateLimit(clientId);
@@ -39,7 +41,7 @@ export function withRateLimit(
       );
     }
 
-    const response = await handler(request);
+    const response = await handler(request, ...rest);
     setResponseHeader(response, 'X-RateLimit-Limit', String(RATE_LIMIT_MAX_REQUESTS));
     setResponseHeader(response, 'X-RateLimit-Remaining', String(rateLimit.remaining));
     setResponseHeader(response, 'X-RateLimit-Reset', String(Math.ceil(rateLimit.resetAt / 1000)));

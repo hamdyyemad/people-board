@@ -42,3 +42,52 @@ export async function validateRequestBody<T>(
 
   return { data: parsed.data };
 }
+
+/**
+ * Validates URL query parameters against a Zod schema.
+ * 
+ * - Missing or invalid params → throws ValidationError (400 via error handler)
+ * - Success → returns { data: T }
+ */
+export function validateRequestQueryParams<T>(
+  request: FrameworkRequest,
+  schema: ZodType<T>
+): { data: T } | { errorResponse: FrameworkResponse } {
+  const { searchParams } = new URL(request.url);
+  
+  // Convert URLSearchParams to object
+  const params = Object.fromEntries(searchParams);
+
+  const parsed = schema.safeParse(params);
+  if (!parsed.success) {
+    const detail =
+      parsed.error.errors.map((e: ZodIssue) => e.message).join('; ') || 'Validation failed';
+    throw new ValidationError(detail);
+  }
+
+  return { data: parsed.data };
+}
+
+// src/backend_lib/shared/validation.ts (add to existing file)
+
+/**
+ * Validates route parameters against a Zod schema.
+ * Route params come from Next.js route segments like [id], [userId], etc.
+ *
+ * - Invalid params → throws ValidationError (400 via error handler)
+ * - Success → returns { data: T }
+ */
+export function validateRouteParams<T>(
+  params: Record<string, string | string[]>,
+  schema: ZodType<T>
+): { data: T } | { errorResponse: FrameworkResponse } {
+  const parsed = schema.safeParse(params);
+  
+  if (!parsed.success) {
+    const detail =
+      parsed.error.errors.map((e: ZodIssue) => e.message).join('; ') || 'Invalid route parameters';
+    throw new ValidationError(detail);
+  }
+
+  return { data: parsed.data };
+}

@@ -7,7 +7,7 @@ import { DepartmentName } from '../../../domain/value-objects/department-name';
 import { Department } from '../../../domain/entities/department';
 
 // DTOs
-import { CreateDepartmentDTO } from '../../dto/department-dto';
+import { CreateDepartmentDTO, DepartmentResponseViewModel } from '../../dto/department-dto';
 
 // Exceptions
 import { DuplicateDepartmentNameError } from '../../../domain/exceptions/department-exceptions';
@@ -18,7 +18,7 @@ export class CreateDepartmentUseCase {
     private idGenerator: IIdGenerator
   ) {}
 
-  async execute(input: CreateDepartmentDTO): Promise<Department> {
+  async execute(input: CreateDepartmentDTO): Promise<DepartmentResponseViewModel> {
     // Create value object (this will also validate the name and normalize it)
     const departmentName = new DepartmentName(input.name);
 
@@ -35,7 +35,18 @@ export class CreateDepartmentUseCase {
       input.parentId || null
     );
 
+    const savedDepartment = await this.departmentRepository.save(department);
     // Save via repository
-    return this.departmentRepository.save(department);
+    
+    const mappedDepartment = new DepartmentResponseViewModel(
+        savedDepartment.id, 
+        savedDepartment.name.getFormatted(), 
+        savedDepartment.parentId, 
+        savedDepartment.createdAt, 
+        savedDepartment.updatedAt,
+        savedDepartment.isActive()
+    );
+    
+    return mappedDepartment;
   }
 }

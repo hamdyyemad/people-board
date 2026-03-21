@@ -14,7 +14,7 @@ export class UpdateDepartmentDTO {
   ) {}
 }
 
-export class DepartmentResponseDTO {
+export class DepartmentResponseViewModel {
   constructor(
     public id: string,
     public name: string,

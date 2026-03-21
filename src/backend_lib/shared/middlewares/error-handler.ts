@@ -13,15 +13,17 @@ import { createErrorResponse, createErrorResponseFromDetails } from '../http/res
 
 /**
  * Wraps a route handler with global error handling
+ * Supports both static and dynamic routes with full type safety
  */
-export function withErrorHandler<T = unknown>(
-  handler: (request: FrameworkRequest) => Promise<FrameworkResponse>
+export function withErrorHandler<P = any>(
+  handler: (request: FrameworkRequest, ...rest: any[]) => Promise<FrameworkResponse>
 ) {
   return async (
-    request: FrameworkRequest
+    request: FrameworkRequest,
+    ...rest: any[]
   ): Promise<FrameworkResponse> => {
     try {
-      return await handler(request);
+      return await handler(request, ...rest);
     } catch (error) {
       if (error instanceof BaseError) {
         return createErrorResponse(request, error);
