@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { DrizzleClient } from '../databases/drizzle-client';
+import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { JobsTable } from '../databases/tables/jobs-table';
 import { IJobRepository } from '../../domain/ports/repositories/job-repository';
 import { Job } from '../../domain/entities/job';

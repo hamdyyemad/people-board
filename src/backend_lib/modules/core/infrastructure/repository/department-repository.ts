@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { DrizzleClient } from '../databases/drizzle-client';
+import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { departmentsTable } from '../databases/tables/departments-table';
 import { IDepartmentRepository } from '../../domain/ports/repositories/department-repository';
 import { Department } from '../../domain/entities/department';
