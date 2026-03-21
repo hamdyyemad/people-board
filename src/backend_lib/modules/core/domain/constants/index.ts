@@ -14,3 +14,9 @@ export {
   DEPARTMENT_NAME_MESSAGES,
   DEPARTMENT_MESSAGES,
 } from './department';
+
+export {
+  JOB_TITLE,
+  JOB_TITLE_MESSAGES,
+  JOB_MESSAGES,
+} from './job';

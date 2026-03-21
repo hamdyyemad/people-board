@@ -51,26 +51,25 @@
 //💡 Common DDD rule: 
 // Entities are mutable, but Value Objects are immutable.
 // ==================================================================
-import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../constants';
+import { JOB_TITLE, JOB_TITLE_MESSAGES } from '../constants';
 
-export class DepartmentName {
-  readonly value: string;
+export class JobTitle {
+    readonly value: string;
 
-  constructor(value: string) {
-    this.validate(value);
-    this.value = value.trim();
-  }
-
-  private validate(value: string): void {
-    if (!value || value.trim().length === 0) {
-      throw new Error(DEPARTMENT_NAME_MESSAGES.EMPTY);
+    constructor(value: string) {
+        this.validate(value);
+        this.value = value.trim();
     }
-    if (value.trim().length > DEPARTMENT_NAME.MAX_LENGTH) {
-      throw new Error(DEPARTMENT_NAME_MESSAGES.TOO_LONG);
-    }
-  }
 
-  equals(other: DepartmentName): boolean {
-    return this.value.toLowerCase() === other.value.toLowerCase();
-  }
+    private validate(value: string): void {
+        if (!value || value.trim().length === 0) {
+            throw new Error(JOB_TITLE_MESSAGES.EMPTY);
+        }
+        if (value.trim().length > JOB_TITLE.MAX_LENGTH) {
+            throw new Error(JOB_TITLE_MESSAGES.TOO_LONG);
+        }
+    }
+    equals(other: JobTitle): boolean {
+        return this.value.toLowerCase() === other.value.toLowerCase();
+    }
 }
