@@ -71,6 +71,20 @@ export class JobTitle {
         this.value = normalize(value);
     }
 
+    /**
+     * Internal factory method for creating JobTitle from trusted sources (e.g., database)
+     * Skips validation since data is already validated and normalized in the database
+     * 
+     * ⚠️ ONLY use this when loading from database - never use for user input!
+     * 
+     * @internal
+     */
+    static fromDatabase(normalizedValue: string): JobTitle {
+        const title = Object.create(JobTitle.prototype);
+        title.value = normalizedValue;
+        return title;
+    }
+
     private validate(value: string): void {
         if (!value || value.trim().length === 0) {
             throw new Error(JOB_TITLE_MESSAGES.EMPTY);

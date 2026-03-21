@@ -71,6 +71,20 @@ export class DepartmentName {
     this.value = normalize(value);
   }
 
+  /**
+   * Internal factory method for creating DepartmentName from trusted sources (e.g., database)
+   * Skips validation since data is already validated and normalized in the database
+   * 
+   * ⚠️ ONLY use this when loading from database - never use for user input!
+   * 
+   * @internal
+   */
+  static fromDatabase(normalizedValue: string): DepartmentName {
+    const name = Object.create(DepartmentName.prototype);
+    name.value = normalizedValue;
+    return name;
+  }
+
   private validate(value: string): void {
     if (!value || value.trim().length === 0) {
       throw new Error(DEPARTMENT_NAME_MESSAGES.EMPTY);

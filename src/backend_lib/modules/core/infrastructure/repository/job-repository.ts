@@ -31,10 +31,11 @@ export class JobRepository extends BaseRepository<Job> implements IJobRepository
   }
 
   // Custom mapping from database/persistence format to domain entity
+  // Using fromDatabase() factory to skip re-validation of already-validated DB data
   protected toDomain(row: any): Job {
     return new Job(
       row.id,
-      new JobTitle(row.title),
+      JobTitle.fromDatabase(row.title), // Optimized: skip validation for DB data
       row.departmentId,
       row.createdAt,
       row.updatedAt,

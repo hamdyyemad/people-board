@@ -31,10 +31,11 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
   }
 
   // Custom mapping from database/persistence format to domain entity
+  // Using fromDatabase() factory to skip re-validation of already-validated DB data
   protected toDomain(row: any): Department {
     return new Department(
       row.id,
-      new DepartmentName(row.name),
+      DepartmentName.fromDatabase(row.name), // Optimized: skip validation for DB data
       row.parentId,
       row.createdAt,
       row.updatedAt,
