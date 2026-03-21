@@ -5,8 +5,7 @@
 
 import {
   BaseError,
-  NotFoundError,
-  ValidationError,
+  NotFoundError
 } from '../../../../shared/exceptions';
 
 /** Thrown when a Job is not found by id. */

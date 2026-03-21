@@ -1,12 +1,22 @@
-// src/backend_lib/modules/core/application/use-cases/create-department.ts
-import { Department } from '../../../domain/entities/department';
-import { DepartmentName } from '../../../domain/value-objects/department-name';
+// Ports
 import { IDepartmentRepository } from '../../../domain/ports/repositories/department-repository';
-import { DuplicateDepartmentNameError } from '../../../domain/exceptions/department-exceptions';
+import { IIdGenerator } from '../../../domain/ports/id-generator';
+
+// Entities & Value Objects
+import { DepartmentName } from '../../../domain/value-objects/department-name';
+import { Department } from '../../../domain/entities/department';
+
+// DTOs
 import { CreateDepartmentDTO } from '../../dto/department-dto';
 
+// Exceptions
+import { DuplicateDepartmentNameError } from '../../../domain/exceptions/department-exceptions';
+
 export class CreateDepartmentUseCase {
-  constructor(private departmentRepository: IDepartmentRepository) {}
+  constructor(
+    private departmentRepository: IDepartmentRepository,
+    private idGenerator: IIdGenerator
+  ) {}
 
   async execute(input: CreateDepartmentDTO): Promise<Department> {
     // Check for duplicate name
@@ -18,16 +28,12 @@ export class CreateDepartmentUseCase {
     // Create domain entity
     const departmentName = new DepartmentName(input.name);
     const department = new Department(
-      this.generateId(),
+      this.idGenerator.generate(),
       departmentName,
       input.parentId || null
     );
 
     // Save via repository
     return this.departmentRepository.save(department);
-  }
-
-  private generateId(): string {
-    return crypto.randomUUID();
   }
 }
