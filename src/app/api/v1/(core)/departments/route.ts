@@ -1,9 +1,17 @@
 import { NextRequest } from 'next/server';
-import { departmentService } from '@/backend_lib/modules/core/composition-root';
-import { createDepartmentBodySchema } from '@/backend_lib/modules/core/validation';
+
+// Middlewares
 import { withMiddlewares } from '@/backend_lib/middlewares';
-import { createSuccessResponse } from '@/backend_lib/http/response';
+
+// Services
+import { departmentService } from '@/backend_lib/modules/core/composition-root';
+
+// Validation
+import { createDepartmentBodySchema } from '@/backend_lib/modules/core/validation';
 import { validateRequestBody } from '@/backend_lib/shared/validation';
+
+// HTTP Response Helpers
+import { createSuccessResponse } from '@/backend_lib/http/response';
 
 export const POST = withMiddlewares(createDepartment);
 

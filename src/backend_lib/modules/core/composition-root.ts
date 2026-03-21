@@ -108,14 +108,29 @@ happens:
 - The manual composition root is trivial to replace with NestJS modules
 - The layers that matter (domain + application) stay **completely untouched**
 
- */
+*/
+// ==========================================================================================
+// Created ONCE at module boundary (Singleton instances of repositories and services are created here)
+import { UuidIDGenerator } from './infrastructure/id-generator/uuid-id-generator';
+const idGenerator = new UuidIDGenerator() // Replace with actual ID generator implementation
+// ======================================Department========================================
 
 // --- Repositories (shared instances, stateless) and Service ---
 import { DepartmentRepository } from './infrastructure/repository/department-repository';
 import { DepartmentService } from './application/services/department-service';
 
 const departmentRepository = new DepartmentRepository();
-export const departmentService = new DepartmentService(departmentRepository);
+export const departmentService = new DepartmentService(departmentRepository, idGenerator);
 
 // ----------------------------------------------------------------------------------------
+
+// ======================================Job================================================
+import { JobRepository } from './infrastructure/repository/job-repository';
+import { JobService } from './application/services/job-service';
+
+const jobRepository = new JobRepository();
+export const jobService = new JobService(jobRepository, departmentRepository, idGenerator);
+// ----------------------------------------------------------------------------------------
+
+
 
