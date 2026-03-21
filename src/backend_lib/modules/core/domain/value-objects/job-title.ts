@@ -52,13 +52,23 @@
 // Entities are mutable, but Value Objects are immutable.
 // ==================================================================
 import { JOB_TITLE, JOB_TITLE_MESSAGES } from '../constants';
+import { normalize, toPascalCase } from '../utils/text-formatting';
 
+/**
+ * Job Title Value Object
+ * 
+ * Stores titles in normalized lowercase form to prevent duplicates like
+ * "Developer" and "developer" being treated as different entries.
+ * 
+ * Provides getFormatted() to return Pascal Case for display.
+ */
 export class JobTitle {
     readonly value: string;
 
     constructor(value: string) {
         this.validate(value);
-        this.value = value.trim();
+        // Normalize to lowercase for storage - prevents "Developer" vs "developer" duplication
+        this.value = normalize(value);
     }
 
     private validate(value: string): void {
@@ -69,6 +79,15 @@ export class JobTitle {
             throw new Error(JOB_TITLE_MESSAGES.TOO_LONG);
         }
     }
+    
+    /**
+     * Get the title formatted as Pascal Case for display
+     * Examples: "developer" → "Developer", "hr" → "HR"
+     */
+    getFormatted(): string {
+        return toPascalCase(this.value);
+    }
+
     equals(other: JobTitle): boolean {
         return this.value.toLowerCase() === other.value.toLowerCase();
     }

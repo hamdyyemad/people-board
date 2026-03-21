@@ -22,10 +22,13 @@ export class CreateJobUseCase {
     ){}
 
     async execute(input: CreateJobDTO): Promise<Job> {
+        // Create value object (this will also validate the title and normalize it)
+        const jobTitle = new JobTitle(input.title);       
+
         // Check for duplicates
-        const existing = await this.jobRepository.findByName(input.title);
+        const existing = await this.jobRepository.findByName(jobTitle.value);
         if (existing) {
-            throw new DuplicateJobNameError(input.title);
+            throw new DuplicateJobNameError(jobTitle.value);
         }
 
         // Check department exists
@@ -35,7 +38,6 @@ export class CreateJobUseCase {
         }
 
         // Create domain entity
-        const jobTitle = new JobTitle(input.title);       
         const job = new Job(
             this.idGenerator.generate(),
             jobTitle,

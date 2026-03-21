@@ -19,14 +19,16 @@ export class CreateDepartmentUseCase {
   ) {}
 
   async execute(input: CreateDepartmentDTO): Promise<Department> {
+    // Create value object (this will also validate the name and normalize it)
+    const departmentName = new DepartmentName(input.name);
+
     // Check for duplicate name
-    const existing = await this.departmentRepository.findByName(input.name);
+    const existing = await this.departmentRepository.findByName(departmentName.value);
     if (existing) {
-      throw new DuplicateDepartmentNameError(input.name);
+      throw new DuplicateDepartmentNameError(departmentName.value);
     }
 
     // Create domain entity
-    const departmentName = new DepartmentName(input.name);
     const department = new Department(
       this.idGenerator.generate(),
       departmentName,

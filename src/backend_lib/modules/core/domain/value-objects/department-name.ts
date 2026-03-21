@@ -52,13 +52,23 @@
 // Entities are mutable, but Value Objects are immutable.
 // ==================================================================
 import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../constants';
+import { normalize, toPascalCase } from '../utils/text-formatting';
 
+/**
+ * Department Name Value Object
+ * 
+ * Stores names in normalized lowercase form to prevent duplicates like
+ * "Operations" and "operations" being treated as different entries.
+ * 
+ * Provides getFormatted() to return Pascal Case for display.
+ */
 export class DepartmentName {
   readonly value: string;
 
   constructor(value: string) {
     this.validate(value);
-    this.value = value.trim();
+    // Normalize to lowercase for storage - prevents "Operations" vs "operations" duplication
+    this.value = normalize(value);
   }
 
   private validate(value: string): void {
@@ -70,6 +80,14 @@ export class DepartmentName {
     }
   }
 
+  /**
+   * Get the name formatted as Pascal Case for display
+   * Examples: "operations" → "Operations", "hr" → "HR"
+   */
+  getFormatted(): string {
+    return toPascalCase(this.value);
+  }
+  
   equals(other: DepartmentName): boolean {
     return this.value.toLowerCase() === other.value.toLowerCase();
   }
