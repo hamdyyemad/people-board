@@ -35,6 +35,7 @@ function DataTableComponent<TData>({
   exportFileName = "export",
   importTemplateColumns,
   isLoading = false,
+  error = null,
   gridCard,
   listCard,
   rowActions,
@@ -73,6 +74,16 @@ function DataTableComponent<TData>({
         enableRowSelection={enableRowSelection}
         enableRowActions={!!rowActions}
       />
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded">
+        <h2 className="text-lg font-semibold">Error loading data</h2>
+        <p>{error.message}</p>
+      </div>
     );
   }
 

@@ -5,7 +5,7 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/frontend_lib/componen
 import { Badge } from "@/frontend_lib/components/ui/badge";
 import { DataTableColumnHeader } from "@/frontend_lib/components/shared/data-table";
 import { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
-import { Department } from "./departments";
+import { type Department } from "@/frontend_lib/api/queries/department";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -42,29 +42,20 @@ export const departmentsColumns: ColumnDef<Department>[] = [
     },
   },
   {
-    accessorKey: "employee_count",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Employees" />,
-    cell: ({ row }) => (
-      <div className="font-medium tabular-nums">
-        {(row.getValue("employee_count") as number).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "created_at",
+    accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
     cell: ({ row }) => (
       <span className="text-muted-foreground text-sm">
-        {formatDate(row.getValue("created_at"))}
+        {formatDate(row.getValue("createdAt"))}
       </span>
     ),
   },
   {
-    accessorKey: "updated_at",
+    accessorKey: "updatedAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Last Updated" />,
     cell: ({ row }) => (
       <span className="text-muted-foreground text-sm">
-        {formatDate(row.getValue("updated_at"))}
+        {formatDate(row.getValue("updatedAt"))}
       </span>
     ),
   },

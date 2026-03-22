@@ -43,6 +43,7 @@ export interface CardConfig<TData> {
 export interface DataTableConfig<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
+  error: Error | null;
   filterFields?: DataTableFilterField<TData>[];
   searchableColumns?: (keyof TData | string)[];
   defaultPageSize?: number;

@@ -11,6 +11,8 @@ import type { ColumnDef, Table } from "@tanstack/react-table";
 interface DataViewLayoutProps<T> {
   children?: React.ReactNode;
   config: EntityConfig<T>;
+  isLoading?: boolean;
+  error?: Error | null;
   // DataTable props
   data: T[];
   columns: ColumnDef<T>[];
@@ -49,6 +51,8 @@ function DataViewLayoutComponent<T extends Object>({
   enableExport = false,
   enableImport = false,
   enableViewToggle = false,
+  isLoading = false,
+  error = null,
 }: DataViewLayoutProps<T>) {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
@@ -59,6 +63,8 @@ function DataViewLayoutComponent<T extends Object>({
       
       {/* DataTable integration */}
       <DataTable
+        isLoading={isLoading}
+        error={error}
         columns={columns}
         data={data}
         defaultPageSize={defaultPageSize}

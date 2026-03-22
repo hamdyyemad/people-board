@@ -1,17 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Building2, Users, GitBranch, Calendar } from "lucide-react";
+import { Building2, Users, Calendar } from "lucide-react";
 import { type EntityConfig, type CardConfig } from "@/frontend_lib/components/shared/data-table";
 import { DepartmentsStats } from "@/frontend_lib/components/features/hr/departments/departments-stats";
 
-import { DEPARTMENTS_DATA, type Department } from "@/frontend_lib/data/hr/departments";
 import type { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
 
 import { departmentsColumns, makeDepartmentRowActions } from "@/frontend_lib/data/hr/departments-columns";
 
 import DataViewLayout from "@/frontend_lib/components/layouts/hr/data-view-layout";
 
+// hooks
+import { useDepartments, type Department } from "@/frontend_lib/api/queries/department";
 
 // ── Page Meta ─────────────────────────────────────────────────────────────────────
 const DEPARTMENT_CONFIG: EntityConfig<Department> = {
@@ -33,27 +34,21 @@ DEPARTMENT_CONFIG.formFields = [
     required: true,
   },
   {
-    key: "parent_name",
+    key: "parentName",
     label: "Parent Department",
     type: "select",
-    options: [
-      { label: "None (top-level)", value: "" },
-      ...DEPARTMENTS_DATA.filter((d) => !d.parent_id).map((d) => ({
-        label: d.name,
-        value: d.name,
-      })),
-    ],
-  },
-  {
-    key: "employee_count",
-    label: "Employee Count",
-    type: "number",
-    placeholder: "0",
-  },
+    // options: [
+    //   { label: "None (top-level)", value: "" },
+    //   ...DEPARTMENTS_DATA.filter((d) => !d.parentId).map((d) => ({
+    //     label: d.name,
+    //     value: d.name,
+    //   })),
+    // ],
+  }
 ];
 // ───────────────────────────────────────────────────────────────────────────────────
 
-const IMPORT_COLUMNS = ["name", "parent_name", "employee_count"];
+const IMPORT_COLUMNS = ["name", "parentName"];
 
 // Row action handler - entity-specific logic
 const handleDepartmentAction = (operation: CrudOperation, dept: Department) => {
@@ -69,7 +64,7 @@ const handleDepartmentClick = (dept: Department) => {
 
 // Filter configuration - entity-specific
 const filterFields = [
-  { label: "Parent Department", value: "parent_name" as keyof Department },
+  { label: "Parent Department", value: "parentName" as keyof Department },
 ];
 
 // Grid card configuration - completely generic!
@@ -79,18 +74,11 @@ const gridCardConfig: CardConfig<Department> = {
   title: (dept) => dept.name,
   badges: [
     {
-      getValue: (dept) => dept.parent_name || "Top-level",
-      getVariant: (dept) => dept.parent_name ? "outline" : "secondary",
+      getValue: (dept) => dept.parentName || "Top-level",
+      getVariant: (dept) => dept.parentName ? "outline" : "secondary",
       format: (value) => value === "Top-level" ? value : value,
     },
-  ],
-  fields: [
-    {
-      icon: Users,
-      getValue: (dept) => dept.employee_count,
-      format: (count) => `${count} employees`,
-    },
-  ],
+  ]
 };
 
 // List card configuration - completely generic!
@@ -98,15 +86,11 @@ const listCardConfig: CardConfig<Department> = {
   icon: Building2,
   iconColor: "bg-primary/10 text-primary",
   title: (dept) => dept.name,
-  subtitle: (dept) => dept.parent_name ? `${dept.parent_name}` : "Top-level department",
+  subtitle: (dept) => dept.parentName ? `${dept.parentName}` : "Top-level department",
   fields: [
     {
-      icon: Users,
-      getValue: (dept) => dept.employee_count,
-    },
-    {
       icon: Calendar,
-      getValue: (dept) => dept.updated_at,
+      getValue: (dept) => dept.updatedAt,
       format: (date) => new Date(date).toLocaleDateString("en-US", {
         month: "short",
         year: "numeric",
@@ -116,10 +100,14 @@ const listCardConfig: CardConfig<Department> = {
 };
 
 function DepartmentsPageComponent() {
+  const { data: departments, isLoading, error } = useDepartments();
+  console.log(departments)  
   return (
     <DataViewLayout 
+      isLoading={isLoading}
+      error={error}
       config={DEPARTMENT_CONFIG}
-      data={DEPARTMENTS_DATA}
+      data={departments || []}
       columns={departmentsColumns}
       defaultPageSize={20}
       enableRowSelection
@@ -136,7 +124,7 @@ function DepartmentsPageComponent() {
       onImport={(rows) => console.log("Imported departments:", rows)}
       filterFields={filterFields}
     >
-      <DepartmentsStats departments={DEPARTMENTS_DATA} />
+      {/* <DepartmentsStats departments={departments || []} /> */}
     </DataViewLayout>
   );
 }
