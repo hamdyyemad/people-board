@@ -62,6 +62,7 @@ export class UpdateDepartmentUseCase {
       updatedDepartment.id,
       updatedDepartment.name.getFormatted(),
       updatedDepartment.parentId,
+      undefined,
       updatedDepartment.createdAt,
       updatedDepartment.updatedAt,
       updatedDepartment.isActive()
