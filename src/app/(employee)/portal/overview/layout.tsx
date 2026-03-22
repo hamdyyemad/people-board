@@ -57,7 +57,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
  * ATTENDANCE TIMER SHELL
  * Main container that manages the "checkedIn" state.
  */
-export function AttendanceTimer() {
+function AttendanceTimer() {
   const [checkedIn, setCheckedIn] = useState(true);
 
   return (
