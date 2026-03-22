@@ -1,4 +1,5 @@
 import { eq, isNull, and } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { departmentsTable } from '../databases/tables/departments-table';
 import { IDepartmentRepository } from '../../domain/ports/repositories/department-repository';
@@ -30,6 +31,38 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
       .where(whereCondition);
 
     return result.map(row => this.toDomain(row));
+  }
+
+  /**
+   * Find all departments with their parent names
+   * 
+   * @param isAudit - If true, includes soft-deleted departments (audit mode). Default: false
+   */
+  async findAll(isAudit: boolean = false): Promise<(Department & { parentName?: string })[]> {
+    const parentDepts = alias(departmentsTable, 'parent');
+    
+    const whereCondition = isAudit 
+      ? undefined 
+      : isNull(departmentsTable.deletedAt);
+
+    const result = await DrizzleClient
+      .select({
+        id: departmentsTable.id,
+        name: departmentsTable.name,
+        parentId: departmentsTable.parentId,
+        createdAt: departmentsTable.createdAt,
+        updatedAt: departmentsTable.updatedAt,
+        deletedAt: departmentsTable.deletedAt,
+        parentName: parentDepts.name,
+      })
+      .from(departmentsTable)
+      .leftJoin(parentDepts, eq(departmentsTable.parentId, parentDepts.id))
+      .where(whereCondition);
+
+    return result.map(row => {
+      const department = this.toDomain(row);
+      return Object.assign(department, { parentName: row.parentName || undefined }) as Department & { parentName?: string };
+    });
   }
 
   // Custom mapping from domain entity to database/persistence format

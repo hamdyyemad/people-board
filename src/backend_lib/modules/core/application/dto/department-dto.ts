@@ -19,6 +19,7 @@ export class DepartmentResponseViewModel {
     public id: string,
     public name: string,
     public parentId: string | null,
+    public parentName: string | undefined,
     public createdAt: Date,
     public updatedAt: Date,
     public isActive: boolean

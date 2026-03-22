@@ -16,6 +16,7 @@ export class GetDepartmentsUseCase {
             dept.id, 
             dept.name.getFormatted(), 
             dept.parentId, 
+            (dept as any).parentName,
             dept.createdAt, 
             dept.updatedAt,
             dept.isActive()

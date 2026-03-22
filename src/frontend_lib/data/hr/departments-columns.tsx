@@ -24,10 +24,10 @@ export const departmentsColumns: ColumnDef<Department>[] = [
     ),
   },
   {
-    accessorKey: "parent_name",
+    accessorKey: "parentName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Parent Department" />,
     cell: ({ row }) => {
-      const parent = row.getValue("parent_name") as string | null;
+      const parent = row.getValue("parentName") as string | null;
       return parent ? (
         <Badge variant="outline" className="font-normal">
           {parent}
