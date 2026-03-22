@@ -17,6 +17,14 @@ export class DepartmentNotFoundError extends NotFoundError {
   }
 }
 
+/** Thrown when a department has already been deleted. */
+export class DepartmentAlreadyDeletedError extends NotFoundError {
+  constructor(name: string) {
+    super(`Department ${name} has already been deleted`);
+    this.name = 'DepartmentAlreadyDeletedError';
+  }
+}
+
 /** Thrown when creating or updating a department with a name that already exists. */
 export class DuplicateDepartmentNameError extends BaseError {
   constructor(name: string) {

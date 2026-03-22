@@ -6,9 +6,11 @@ import { IIdGenerator } from '../../domain/ports/id-generator';
 import { CreateDepartmentUseCase } from '../use-cases/department/create-department';
 import { GetDepartmentsUseCase } from '../use-cases/department/get-departments';
 import { GetDepartmentByIdUseCase } from '../use-cases/department/get-department-by-id';
+import { UpdateDepartmentUseCase } from '../use-cases/department/update-department';
+import { DeleteDepartmentUseCase } from '../use-cases/department/delete-department';
 
 // DTOs
-import { CreateDepartmentDTO } from '../dto/department-dto';
+import { CreateDepartmentDTO, UpdateDepartmentDTO } from '../dto/department-dto';
 
 export class DepartmentService {
   constructor(
@@ -29,6 +31,17 @@ export class DepartmentService {
 
   async getDepartmentById(id: string) {
     const useCase = new GetDepartmentByIdUseCase(this.departmentRepository);
+    return useCase.execute(id);
+  }
+
+  async updateDepartment(input: { id: string; name?: string; parentId?: string | null }) {
+    const useCase = new UpdateDepartmentUseCase(this.departmentRepository);
+    const dto = new UpdateDepartmentDTO(input.id, input.name, input.parentId ?? undefined);
+    return useCase.execute(dto);
+  }
+
+  async deleteDepartment(id: string) {
+    const useCase = new DeleteDepartmentUseCase(this.departmentRepository);
     return useCase.execute(id);
   }
 }

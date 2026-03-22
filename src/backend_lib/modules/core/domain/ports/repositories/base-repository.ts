@@ -16,17 +16,17 @@ export interface IBaseRepository<T extends { id: string }> {
   /**
    * Find entity by unique identifier
    */
-  findById(id: string): Promise<T | null>;
+  findById(id: string, isAudit?: boolean): Promise<T | null>;
 
   /**
    * Find entity by name (if applicable)
    */
-  findByName(name: string): Promise<T | null>;
+  findByName(name: string, isAudit?: boolean): Promise<T | null>;
 
   /**
    * Find all entities, optionally including soft-deleted ones
    */
-  findAll(includeDeleted?: boolean): Promise<T[]>;
+  findAll(isAudit?: boolean): Promise<T[]>;
 
   /**
    * Update an existing entity

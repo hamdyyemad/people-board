@@ -23,7 +23,13 @@ export abstract class BaseRepository<T extends { id: string }> {
     return entity;
   }
 
-  async findById(id: string): Promise<T | null> {
+  /**
+   * Find entity by unique identifier
+   * 
+   * @param id - The entity ID to search for
+   * @param isAudit - If true, includes soft-deleted records (audit mode). Default: false
+   */
+  async findById(id: string, isAudit: boolean = false): Promise<T | null> {
     const result = await DrizzleClient
       .select()
       .from(this.table)
@@ -31,10 +37,24 @@ export abstract class BaseRepository<T extends { id: string }> {
       .limit(1);
 
     if (!result.length) return null;
-    return this.toDomain(result[0]);
+
+    const row = result[0];
+    
+    // Skip deleted records unless in audit mode
+    if (!isAudit && row.deletedAt !== null) {
+      return null;
+    }
+
+    return this.toDomain(row);
   }
 
-  async findByName(name: string): Promise<T | null> {
+  /**
+   * Find entity by name
+   * 
+   * @param name - The entity name to search for
+   * @param isAudit - If true, includes soft-deleted records (audit mode). Default: false
+   */
+  async findByName(name: string, isAudit: boolean = false): Promise<T | null> {
     const result = await DrizzleClient
       .select()
       .from(this.table)
@@ -42,11 +62,19 @@ export abstract class BaseRepository<T extends { id: string }> {
       .limit(1);
 
     if (!result.length) return null;
-    return this.toDomain(result[0]);
+
+    const row = result[0];
+    
+    // Skip deleted records unless in audit mode
+    if (!isAudit && row.deletedAt !== null) {
+      return null;
+    }
+
+    return this.toDomain(row);
   }
 
-  async findAll(includeDeleted = false): Promise<T[]> {
-    const result = includeDeleted
+  async findAll(isAudit = false): Promise<T[]> {
+    const result = isAudit
       ? await DrizzleClient.select().from(this.table)
       : await DrizzleClient
           .select()

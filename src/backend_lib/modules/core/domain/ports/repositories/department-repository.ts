@@ -5,5 +5,5 @@ export interface IDepartmentRepository extends IBaseRepository<Department> {
   /**
    * Find all departments under a specific parent
    */
-  findByParentId(parentId: string): Promise<Department[]>;
+  findByParentId(parentId: string, isAudit?: boolean): Promise<Department[]>;
 }
