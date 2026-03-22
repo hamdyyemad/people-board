@@ -5,6 +5,7 @@ import { IIdGenerator } from '../../domain/ports/id-generator';
 // Use Cases
 import { CreateDepartmentUseCase } from '../use-cases/department/create-department';
 import { GetDepartmentsUseCase } from '../use-cases/department/get-departments';
+import { GetDepartmentsStatsUseCase } from '../use-cases/department/get-departments-stats';
 import { GetDepartmentByIdUseCase } from '../use-cases/department/get-department-by-id';
 import { UpdateDepartmentUseCase } from '../use-cases/department/update-department';
 import { DeleteDepartmentUseCase } from '../use-cases/department/delete-department';
@@ -26,6 +27,11 @@ export class DepartmentService {
 
   async getDepartments() {
     const useCase = new GetDepartmentsUseCase(this.departmentRepository);
+    return useCase.execute();
+  }
+
+  async getDepartmentsStats() {
+    const useCase = new GetDepartmentsStatsUseCase(this.departmentRepository);
     return useCase.execute();
   }
 

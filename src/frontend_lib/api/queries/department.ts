@@ -9,10 +9,23 @@ export interface Department {
   updatedAt: string;
   deletedAt: string | null;
 }
+  
+export interface DepartmentStats {
+  totalDepartments: number;
+  topLevelDepartments: number;
+  subDepartments: number;
+}
 
 const fetchDepartments = async (): Promise<Department[]> => {
   // In production, replace this with actual fetch:
   const res = await fetch('/api/v1/departments');
+  const data = await res.json(); 
+  return data.data;
+};
+
+const fetchDepartmentStats = async (): Promise<DepartmentStats> => {
+  // In production, replace this with actual fetch:
+  const res = await fetch('/api/v1/departments/stats');
   const data = await res.json(); 
   return data.data;
 };
@@ -32,6 +45,14 @@ export const useDepartments = () => {
   });
 };
 
+
+export const useDepartmentStats = () => {
+  return useQuery({
+    queryKey: ['departments', 'stats'],
+    queryFn: fetchDepartmentStats,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
 
 export const useDepartment = (id: string) => {
   return useQuery({

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Building2, Users, Calendar } from "lucide-react";
+import { Building2, Calendar } from "lucide-react";
 import { type EntityConfig, type CardConfig } from "@/frontend_lib/components/shared/data-table";
 import { DepartmentsStats } from "@/frontend_lib/components/features/hr/departments/departments-stats";
 
@@ -12,7 +12,7 @@ import { departmentsColumns, makeDepartmentRowActions } from "@/frontend_lib/dat
 import DataViewLayout from "@/frontend_lib/components/layouts/hr/data-view-layout";
 
 // hooks
-import { useDepartments, type Department } from "@/frontend_lib/api/queries/department";
+import { useDepartments, useDepartmentStats, type Department } from "@/frontend_lib/api/queries/department";
 
 // ── Page Meta ─────────────────────────────────────────────────────────────────────
 const DEPARTMENT_CONFIG: EntityConfig<Department> = {
@@ -101,7 +101,7 @@ const listCardConfig: CardConfig<Department> = {
 
 function DepartmentsPageComponent() {
   const { data: departments, isLoading, error } = useDepartments();
-  console.log(departments)  
+  const { data: stats, isLoading: isStatsLoading, error: statsError } = useDepartmentStats(); // Custom hook to fetch stats from /api/v1/departments/stats
   return (
     <DataViewLayout 
       isLoading={isLoading}
@@ -124,7 +124,7 @@ function DepartmentsPageComponent() {
       onImport={(rows) => console.log("Imported departments:", rows)}
       filterFields={filterFields}
     >
-      {/* <DepartmentsStats departments={departments || []} /> */}
+      <DepartmentsStats stats={stats} isLoading={isStatsLoading} error={statsError} />
     </DataViewLayout>
   );
 }

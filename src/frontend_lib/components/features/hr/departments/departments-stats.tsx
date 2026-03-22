@@ -1,44 +1,41 @@
 import * as React from "react";
-import { Card, CardContent } from "@/frontend_lib/components/ui/card";
-import { type Department } from "@/frontend_lib/api/queries/department";
+import { StatsCards, type StatsCardConfig } from "@/frontend_lib/components/shared/stats-cards";
+import { type DepartmentStats } from "@/frontend_lib/api/queries/department";
 
 interface DepartmentsStatsProps {
-  departments: Department[];
+  stats?: DepartmentStats;
+  isLoading?: boolean;
+  error?: Error | null;
 }
 
-function DepartmentsStatsComponent({ departments }: DepartmentsStatsProps) {
-  // Moving the calculation logic inside the stats component keeps the parent clean
-  const topLevel = departments.filter((d) => !d.parentId).length;
-  const subDepts = departments.filter((d) => !!d.parentId).length;
-  // const totalEmployees = departments.reduce((sum, d) => sum + d.employee_count, 0);
+const DEPARTMENT_STATS_CONFIG: StatsCardConfig[] = [
+  {
+    key: "totalDepartments",
+    label: "Total",
+    variant: "primary",
+  },
+  {
+    key: "topLevelDepartments",
+    label: "Top-level",
+    variant: "primary",
+  },
+  {
+    key: "subDepartments",
+    label: "Sub-departments",
+    variant: "primary",
+  },
+];
 
+function DepartmentsStatsComponent({ stats, isLoading = false, error = null }: DepartmentsStatsProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      <Card>
-        <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</p>
-          <p className="text-3xl font-bold mt-1">{departments.length}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Top-level</p>
-          <p className="text-3xl font-bold mt-1 text-primary">{topLevel}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sub-departments</p>
-          <p className="text-3xl font-bold mt-1">{subDepts}</p>
-        </CardContent>
-      </Card>
-      {/* <Card>
-        <CardContent className="pt-5 pb-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Employees</p>
-          <p className="text-3xl font-bold mt-1">{totalEmployees.toLocaleString()}</p>
-        </CardContent>
-      </Card> */}
-    </div>
+    <StatsCards
+      data={stats}
+      config={DEPARTMENT_STATS_CONFIG}
+      gridCols={3}
+      gap="gap-4"
+      isLoading={isLoading}
+      error={error}
+    />
   );
 }
 

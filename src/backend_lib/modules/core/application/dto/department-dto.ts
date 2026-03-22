@@ -1,4 +1,4 @@
-// src/backend_lib/modules/core/application/dto/department.dto.ts
+// ################# DTOs #################
 export class CreateDepartmentDTO {
   constructor(
     public name: string,
@@ -14,6 +14,15 @@ export class UpdateDepartmentDTO {
   ) {}
 }
 
+export class DepartmentStatsDTO {
+  constructor(
+    public totalDepartments: number,
+    public topLevelDepartments: number,
+    public subDepartments: number
+  ) {}
+}
+
+// ############# View Models #############
 export class DepartmentResponseViewModel {
   constructor(
     public id: string,
@@ -23,5 +32,13 @@ export class DepartmentResponseViewModel {
     public createdAt: Date,
     public updatedAt: Date,
     public isActive: boolean
+  ) {}
+}
+
+export class DepartmentStatsViewModel {
+  constructor(
+    public totalDepartments: number,
+    public topLevelDepartments: number,
+    public subDepartments: number
   ) {}
 }

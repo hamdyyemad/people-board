@@ -1,4 +1,4 @@
-import { eq, isNull, and } from 'drizzle-orm';
+import { eq, isNull, and, count, isNotNull, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { departmentsTable } from '../databases/tables/departments-table';
@@ -6,6 +6,7 @@ import { IDepartmentRepository } from '../../domain/ports/repositories/departmen
 import { Department } from '../../domain/entities/department';
 import { DepartmentName } from '../../domain/value-objects/department-name';
 import { BaseRepository } from './base-repository';
+import { DepartmentStatsDTO } from '../../application/dto/department-dto';
 
 export class DepartmentRepository extends BaseRepository<Department> implements IDepartmentRepository {
   protected table = departmentsTable;
@@ -63,6 +64,34 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
       const department = this.toDomain(row);
       return Object.assign(department, { parentName: row.parentName || undefined }) as Department & { parentName?: string };
     });
+  }
+
+  /**
+   * Get department statistics
+   * 
+   * @returns DepartmentStatsDTO with counts of total, top-level, and sub-departments
+   */
+  async getStats(): Promise<DepartmentStatsDTO> {
+    // Single database query to get all stats at once using CASE expressions
+    const result = await DrizzleClient
+      .select({
+        totalDepartments: count(),
+        topLevelDepartments: count(
+          sql`CASE WHEN ${departmentsTable.parentId} IS NULL THEN 1 END`
+        ),
+        subDepartments: count(
+          sql`CASE WHEN ${departmentsTable.parentId} IS NOT NULL THEN 1 END`
+        ),
+      })
+      .from(departmentsTable)
+      .where(isNull(departmentsTable.deletedAt));
+
+    const stats = result[0];
+    return new DepartmentStatsDTO(
+      stats.totalDepartments,
+      stats.topLevelDepartments,
+      stats.subDepartments
+    );
   }
 
   // Custom mapping from domain entity to database/persistence format
