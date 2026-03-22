@@ -6,7 +6,7 @@ import { type EntityConfig, type CardConfig } from "@/frontend_lib/components/sh
 import { JobsStats } from "@/frontend_lib/components/features/hr/jobs/jobs-stats";
 
 import { JOBS_DATA, type Job } from "@/frontend_lib/data/hr/jobs";
-import { DEPARTMENTS_DATA } from "@/frontend_lib/data/hr/departments";
+// import { DEPARTMENTS_DATA } from "@/frontend_lib/data/hr/departments";
 import type { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
 
 import { jobsColumns, makeJobRowActions } from "@/frontend_lib/data/hr/jobs-columns";
@@ -33,13 +33,13 @@ JOB_CONFIG.formFields = [
     placeholder: "e.g. Senior Frontend Engineer",
     required: true,
   },
-  {
-    key: "department_name",
-    label: "Department",
-    type: "select",
-    required: true,
-    options: DEPARTMENTS_DATA.map((d) => ({ label: d.name, value: d.name })),
-  },
+  // {
+  //   key: "department_name",
+  //   label: "Department",
+  //   type: "select",
+  //   required: true,
+  //   options: DEPARTMENTS_DATA.map((d) => ({ label: d.name, value: d.name })),
+  // },
   {
     key: "is_active",
     label: "Status",
