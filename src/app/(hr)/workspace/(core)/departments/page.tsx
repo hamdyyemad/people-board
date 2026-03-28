@@ -1,18 +1,17 @@
 "use client";
-
 import * as React from "react";
 import { Building2, Calendar } from "lucide-react";
-import { type EntityConfig, type CardConfig } from "@/frontend_lib/components/shared/data-table";
-import { DepartmentsStats } from "@/frontend_lib/components/features/hr/departments/departments-stats";
 
+import { type EntityConfig, type CardConfig } from "@/frontend_lib/components/shared/data-table";
 import type { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
 
+import { toast } from "sonner";
+import { DepartmentsStats } from "@/frontend_lib/components/features/hr/departments/departments-stats";
 import { departmentsColumns, makeDepartmentRowActions } from "@/frontend_lib/data/hr/departments-columns";
-
 import DataViewLayout from "@/frontend_lib/components/layouts/hr/data-view-layout";
 
 // hooks
-import { useDepartments, useDepartmentStats, type Department } from "@/frontend_lib/api/queries/department";
+import { useCreateDepartment, useDepartments, useDepartmentStats, type Department } from "@/frontend_lib/api/department";
 
 // ── Page Meta ─────────────────────────────────────────────────────────────────────
 const DEPARTMENT_CONFIG: EntityConfig<Department> = {
@@ -20,7 +19,6 @@ const DEPARTMENT_CONFIG: EntityConfig<Department> = {
   description: "Manage your organizational structure and department hierarchy",
   formFields: [], // We set them in the next block
   getRecordLabel: (dept) => dept.name,
-  onAdd: (data) => console.log("Adding department...", data),
 };
 // ───────────────────────────────────────────────────────────────────────────────────
 
@@ -34,14 +32,14 @@ DEPARTMENT_CONFIG.formFields = [
     required: true,
   },
   {
-    key: "parentName",
+    key: "parentId",
     label: "Parent Department",
     type: "select",
     // options: [
     //   { label: "None (top-level)", value: "" },
     //   ...DEPARTMENTS_DATA.filter((d) => !d.parentId).map((d) => ({
     //     label: d.name,
-    //     value: d.name,
+    //     value: d.id,
     //   })),
     // ],
   }
@@ -102,10 +100,26 @@ const listCardConfig: CardConfig<Department> = {
 function DepartmentsPageComponent() {
   const { data: departments, isLoading, error } = useDepartments();
   const { data: stats, isLoading: isStatsLoading, error: statsError } = useDepartmentStats(); // Custom hook to fetch stats from /api/v1/departments/stats
+  const { mutateAsync: createDepartment } = useCreateDepartment();
+  
+  DEPARTMENT_CONFIG.onAdd = async (data) => {
+    await createDepartment(data);
+    toast.success(`Department "${data.name}" created successfully!`);
+  }
+
+  // Update form field options based on fetched departments
+  DEPARTMENT_CONFIG.formFields[1].options = [
+    { label: "None (top-level)", value: "" },
+    ...(departments?.filter((d) => !d.parentName).map((d) => ({
+      label: d.name,
+      value: d.id,
+    })) || []),
+  ];
+    
   return (
     <DataViewLayout 
       isLoading={isLoading}
-      error={error}
+      error={error as Error | null}
       config={DEPARTMENT_CONFIG}
       data={departments || []}
       columns={departmentsColumns}
@@ -124,7 +138,7 @@ function DepartmentsPageComponent() {
       onImport={(rows) => console.log("Imported departments:", rows)}
       filterFields={filterFields}
     >
-      <DepartmentsStats stats={stats} isLoading={isStatsLoading} error={statsError} />
+      <DepartmentsStats stats={stats} isLoading={isStatsLoading} error={statsError as Error | null} />
     </DataViewLayout>
   );
 }

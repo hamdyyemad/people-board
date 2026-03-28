@@ -1,6 +1,6 @@
 import { geistSans, geistMono, metadata, getLocale } from "@/frontend_lib/lib";
 
-import { ApiProvider, LocaleProvider, ThemeProvider } from "@/frontend_lib/components/providers";
+import { ApiProvider, ErrorProvider, LocaleProvider, ThemeProvider } from "@/frontend_lib/components/providers";
 import { Head } from "@/frontend_lib/components/shared";
 
 import "./globals.css";
@@ -19,11 +19,13 @@ export default async function RootLayout({
     <html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
       <Head />
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ApiProvider>
-          <LocaleProvider initialLocale={locale}>
-            <ThemeProvider>{children}</ThemeProvider>
-          </LocaleProvider>
-        </ApiProvider>
+        <ErrorProvider>
+          <ApiProvider>
+            <LocaleProvider initialLocale={locale}>
+              <ThemeProvider>{children}</ThemeProvider>
+            </LocaleProvider>
+          </ApiProvider>
+        </ErrorProvider>
       </body>
     </html>
   );

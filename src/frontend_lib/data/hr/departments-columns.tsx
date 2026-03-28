@@ -5,7 +5,7 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/frontend_lib/componen
 import { Badge } from "@/frontend_lib/components/ui/badge";
 import { DataTableColumnHeader } from "@/frontend_lib/components/shared/data-table";
 import { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
-import { type Department } from "@/frontend_lib/api/queries/department";
+import { type Department } from "@/frontend_lib/api/department";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {

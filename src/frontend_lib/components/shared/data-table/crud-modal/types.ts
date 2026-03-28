@@ -7,9 +7,9 @@ export interface CrudModalState<TData> {
 }
 
 export interface CrudModalActions<TData> {
-  onAdd?: (data: Partial<TData>) => void;
-  onEdit?: (data: TData) => void;
-  onDelete?: (record: TData) => void;
+  onAdd?: (data: Partial<TData>) => void | Promise<void>;
+  onEdit?: (data: TData) => void | Promise<void>;
+  onDelete?: (record: TData) => void | Promise<void>;
   onClose?: () => void;
 }
 
@@ -20,5 +20,5 @@ export interface CrudModalActions<TData> {
 export interface ModalBodyProps<TData> {
   record: TData | null;
   onClose: () => void;
-  onConfirm: (data?: Partial<TData>) => void;
+  onConfirm: (data?: Partial<TData>) => void | Promise<void>;
 }

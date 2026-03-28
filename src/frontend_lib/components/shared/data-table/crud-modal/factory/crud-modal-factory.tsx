@@ -5,6 +5,7 @@ import { ViewModalBody } from "../products/view-modal-body";
 import { FormModalBody, FormField } from "../products/form-modal-body";
 import { DeleteModalBody } from "../products/delete-modal-body";
 import { CrudOperation, CrudModalActions, ModalBodyProps } from "../types";
+import * as React from "react";
 
 interface CrudModalFactoryProps<TData extends object> {
   open: boolean;
@@ -44,15 +45,28 @@ export function CrudModalFactory<TData extends object>({
   loading = false,
   actions,
 }: CrudModalFactoryProps<TData>) {
+  const [isLoading, setIsLoading] = React.useState(false);
+
   if (!operation) return null;
 
   const modalConfig = getModalConfig(operation, entityName);
 
-  function handleConfirm(data?: Partial<TData>) {
-    if (operation === "add") actions.onAdd?.(data ?? {});
-    else if (operation === "edit" && record) actions.onEdit?.({ ...record, ...data });
-    else if (operation === "delete" && record) actions.onDelete?.(record);
-    onClose();
+  async function handleConfirm(data?: Partial<TData>) {
+    setIsLoading(true);
+    try {
+      if (operation === "add") {
+        await Promise.resolve(actions.onAdd?.(data ?? {}));
+      } else if (operation === "edit" && record) {
+        await Promise.resolve(actions.onEdit?.({ ...record, ...data }));
+      } else if (operation === "delete" && record) {
+        await Promise.resolve(actions.onDelete?.(record));
+      }
+      onClose();
+    } catch (error) {
+      // Error is already shown by the global error handler from notifyError()
+      // Keep modal open so user can retry
+      setIsLoading(false);
+    }
   }
 
   const sharedBodyProps = { record, onClose, onConfirm: handleConfirm };
@@ -76,7 +90,7 @@ export function CrudModalFactory<TData extends object>({
           {...(sharedBodyProps as ModalBodyProps<TData & Record<string, unknown>>)}
           fields={formFields}
           operation={operation}
-          loading={loading}
+          loading={isLoading || loading}
         />
       )}
 
@@ -84,7 +98,7 @@ export function CrudModalFactory<TData extends object>({
         <DeleteModalBody<TData>
           {...sharedBodyProps}
           recordLabel={record ? getRecordLabel?.(record) : undefined}
-          loading={loading}
+          loading={isLoading || loading}
         />
       )}
     </ModalShell>

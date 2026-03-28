@@ -1,6 +1,6 @@
 import * as React from "react";
 import { StatsCards, type StatsCardConfig } from "@/frontend_lib/components/shared/stats-cards";
-import { type DepartmentStats } from "@/frontend_lib/api/queries/department";
+import { type DepartmentStats } from "@/frontend_lib/api/department/api";
 
 interface DepartmentsStatsProps {
   stats?: DepartmentStats;

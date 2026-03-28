@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Input } from "@/frontend_lib/components/ui/input";
 import { Label } from "@/frontend_lib/components/ui/label";
+import { Combobox } from "@/frontend_lib/components/ui/combobox";
 import { ModalFooter } from "../shared/modal-footer";
 import { ModalBodyProps } from "../types";
 
@@ -78,20 +79,15 @@ export function FormModalBody<TData extends Record<string, unknown>>({
             </Label>
 
             {field.type === "select" && field.options ? (
-              <select
-                id={field.key}
+              <Combobox
                 value={values[field.key]}
-                onChange={(e) => handleChange(field.key, e.target.value)}
+                onValueChange={(value) => handleChange(field.key, value)}
+                options={field.options}
+                placeholder={`Select ${field.label}...`}
+                searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+                emptyMessage={`No ${field.label.toLowerCase()} found.`}
                 disabled={field.readOnly}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select {field.label}…</option>
-                {field.options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              />
             ) : field.type === "textarea" ? (
               <textarea
                 id={field.key}

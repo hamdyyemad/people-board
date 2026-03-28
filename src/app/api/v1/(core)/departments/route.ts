@@ -20,7 +20,7 @@ export const POST = withMiddlewares(createDepartment);
 async function createDepartment(request: NextRequest) {
   const result = await validateRequestBody(request, createDepartmentBodySchema);
   if ('errorResponse' in result) return result.errorResponse;
-
+  
   const { name, parentId } = result.data;
   const department = await departmentService.createDepartment({
     name,

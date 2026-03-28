@@ -38,17 +38,6 @@ function SkeletonCard() {
   );
 }
 
-function ErrorCard() {
-  return (
-    <Card className="bg-red-50 border-red-200">
-      <CardContent className="pt-5 pb-4">
-        <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Error</p>
-        <p className="text-sm font-semibold mt-1 text-red-600">Failed to load stats</p>
-      </CardContent>
-    </Card>
-  );
-}
-
 function StatsCardsComponent<T extends Record<string, any>>({
   data,
   config,
@@ -74,11 +63,7 @@ function StatsCardsComponent<T extends Record<string, any>>({
 
   // Show error state
   if (error) {
-    return (
-      <div className={gridClass}>
-        <ErrorCard />
-      </div>
-    );
+    return null
   }
 
   // Show data
