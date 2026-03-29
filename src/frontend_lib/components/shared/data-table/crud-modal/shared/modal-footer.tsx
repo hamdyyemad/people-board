@@ -36,12 +36,12 @@ export function ModalFooter({
   className,
 }: ModalFooterProps) {
   return (
-    <div className={`flex items-center justify-between gap-3 pt-2 ${className ?? ""}`}>
+    <div className={`flex flex-col md:flex-row items-center justify-between gap-3 pt-2 ${className ?? ""}`}>
       {/* Left slot */}
       <div>{leftAction ?? <span />}</div>
 
       {/* Right actions */}
-      <DialogFooter className="gap-2">
+      <DialogFooter className="gap-2 w-full">
         <Button variant="outline" onClick={onClose} disabled={loading}>
           {readOnly ? "Close" : cancelLabel}
         </Button>
