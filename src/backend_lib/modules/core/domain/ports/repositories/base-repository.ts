@@ -19,6 +19,11 @@ export interface IBaseRepository<T extends { id: string }> {
   findById(id: string, isAudit?: boolean): Promise<T | null>;
 
   /**
+   * Check whether an entity exists by unique identifier
+   */
+  existsById(id: string, isAudit?: boolean): Promise<boolean>;
+
+  /**
    * Find entity by name (if applicable)
    */
   findByName(name: string, isAudit?: boolean): Promise<T | null>;

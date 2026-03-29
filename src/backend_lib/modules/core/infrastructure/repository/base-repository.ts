@@ -1,4 +1,4 @@
-import { eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 
 /**
@@ -46,6 +46,29 @@ export abstract class BaseRepository<T extends { id: string }> {
     }
 
     return this.toDomain(row);
+  }
+
+  /**
+   * Check whether an entity exists by id without hydrating the full row.
+   *
+   * This is cheaper than `findById()` when the caller only needs existence,
+   * because it selects a constant and stops at the first match.
+   *
+   * @param id - The entity ID to search for
+   * @param isAudit - If true, includes soft-deleted records (audit mode). Default: false
+   */
+  async existsById(id: string, isAudit: boolean = false): Promise<boolean> {
+    const whereClause = isAudit
+      ? eq(this.table.id, id)
+      : and(eq(this.table.id, id), isNull(this.table.deletedAt));
+
+    const result = await DrizzleClient
+      .select({ exists: sql<number>`1` })
+      .from(this.table)
+      .where(whereClause)
+      .limit(1);
+
+    return result.length > 0;
   }
 
   /**

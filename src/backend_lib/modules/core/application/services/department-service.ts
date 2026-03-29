@@ -13,6 +13,9 @@ import { DeleteDepartmentUseCase } from '../use-cases/department/delete-departme
 // DTOs
 import { CreateDepartmentDTO, UpdateDepartmentDTO } from '../dto/department-dto';
 
+// Exceptions
+import { DepartmentNotFoundError } from '../../domain/exceptions/department-exceptions';
+
 export class DepartmentService {
   constructor(
     private readonly departmentRepository: IDepartmentRepository, 
@@ -20,6 +23,7 @@ export class DepartmentService {
   ) {}
 
   async createDepartment(input: { name: string; parentId?: string | null }) {
+    await this.checkDepartmentExists(input.parentId ?? '');
     const useCase = new CreateDepartmentUseCase(this.departmentRepository, this.idGenerator);
     const dto = new CreateDepartmentDTO(input.name, input.parentId ?? undefined);
     return useCase.execute(dto);
@@ -49,5 +53,17 @@ export class DepartmentService {
   async deleteDepartment(id: string) {
     const useCase = new DeleteDepartmentUseCase(this.departmentRepository);
     return useCase.execute(id);
+  }
+
+  async checkDepartmentExists(id: string): Promise<boolean> {
+    if (!id) return true; // If no parentId is provided, we consider it valid (root department)
+
+    const exist = await this.departmentRepository.existsById(id);
+
+    if (!exist) {
+      throw new DepartmentNotFoundError(`Department with ID ${id} does not exist.`);
+    }
+    
+    return exist;
   }
 }
