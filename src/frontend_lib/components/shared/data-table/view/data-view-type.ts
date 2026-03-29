@@ -7,5 +7,7 @@ export interface EntityConfig<T> {
   formFields: FormField[];
   getRecordLabel: (record: T) => string;
   onAdd?: (data: Partial<T>) => void | Promise<void>;
+  onEdit?: (data: T) => void | Promise<void>;
+  onDelete?: (record: T) => void | Promise<void>;
   // ... any other entity-specific overrides
 }

@@ -28,12 +28,13 @@ function DataTableRowActionsComponent<TData>({
         <Button
           variant="ghost"
           className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
+          onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="h-4 w-4" />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40">
+      <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
         {actions(row.original, table)}
       </DropdownMenuContent>
     </DropdownMenu>

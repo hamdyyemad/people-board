@@ -5,7 +5,11 @@ import {
   type EntityConfig,
   type CardConfig,
   type DataTableFilterField,
+  type CrudModalControls,
+  type CrudOperation,
 } from "@/frontend_lib/components/shared/data-table";
+import { CrudModalFactory } from "@/frontend_lib/components/shared/data-table/crud-modal";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/frontend_lib/components/ui/dropdown-menu";
 import type { ColumnDef, Table } from "@tanstack/react-table";
 
 interface DataViewLayoutProps<T> {
@@ -30,6 +34,9 @@ interface DataViewLayoutProps<T> {
   enableExport?: boolean;
   enableImport?: boolean;
   enableViewToggle?: boolean;
+  // Modal props
+  modal?: CrudModalControls<T>;
+  modalLoading?: boolean;
 }
 
 function DataViewLayoutComponent<T extends Object>({ 
@@ -53,7 +60,51 @@ function DataViewLayoutComponent<T extends Object>({
   enableViewToggle = false,
   isLoading = false,
   error = null,
+  modal,
+  modalLoading = false,
 }: DataViewLayoutProps<T>) {
+  
+  // Generic click handlers for modal operations
+  const handleRowClick = React.useCallback((row: T) => {
+    if (modal) {
+      modal.openModal("view", row);
+    } else if (onRowClick) {
+      onRowClick(row);
+    }
+  }, [modal?.openModal, onRowClick]);
+
+  const handleRowAction = React.useCallback((operation: CrudOperation, row: T) => {
+    modal?.openModal(operation, row);
+  }, [modal?.openModal]);
+
+  // Use provided rowActions or create generic ones if modal is provided
+  const finalRowActions = React.useMemo(() => {
+    if (rowActions) return rowActions;
+    
+    // If modal is provided, create generic row actions
+    if (modal) {
+      return (row: T) => (
+        <>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRowAction("view", row); }}>
+            View details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRowAction("edit", row); }}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={(e) => { e.stopPropagation(); handleRowAction("delete", row); }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </>
+      );
+    }
+    
+    return undefined;
+  }, [rowActions, modal, handleRowAction]);
+  
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <DataViewHeader config={config} />
@@ -75,13 +126,33 @@ function DataViewLayoutComponent<T extends Object>({
         enableViewToggle={enableViewToggle}
         exportFileName={exportFileName}
         importTemplateColumns={importTemplateColumns}
-        rowActions={rowActions}
+        rowActions={finalRowActions}
         gridCard={gridCard}
         listCard={listCard}
-        onRowClick={onRowClick}
+        onRowClick={handleRowClick}
         onImport={onImport}
         filterFields={filterFields}
       />
+      
+      
+      {/* CRUD Modal for row actions (edit/delete/view) */}
+      {modal?.open && (
+        <CrudModalFactory
+          open={modal.open}
+          operation={modal.operation}
+          record={modal.record}
+          entityName={config.name}
+          formFields={config.formFields}
+          getRecordLabel={config.getRecordLabel}
+          onClose={modal.closeModal}
+          loading={modalLoading}
+          actions={{
+            onAdd: config.onAdd,
+            onEdit: config.onEdit,
+            onDelete: config.onDelete,
+          }}
+        />
+      )}
     </div>
   );
 }

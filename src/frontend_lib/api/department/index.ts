@@ -1,6 +1,6 @@
 // hooks
 export { useDepartments, useDepartmentStats, useDepartment } from './queries';
-export { useCreateDepartment } from './mutations';
+export { useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from './mutations';
 
 // types
 export type { Department, DepartmentStats } from './types';

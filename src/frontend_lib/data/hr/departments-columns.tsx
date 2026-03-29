@@ -67,16 +67,16 @@ export function makeDepartmentRowActions(
   return function DepartmentRowActions(row: Department) {
     return (
       <>
-        <DropdownMenuItem onClick={() => onAction("view", row)}>
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAction("view", row); }}>
           View details
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onAction("edit", row)}>
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAction("edit", row); }}>
           Edit department
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
-          onClick={() => onAction("delete", row)}
+          onClick={(e) => { e.stopPropagation(); onAction("delete", row); }}
         >
           Delete
         </DropdownMenuItem>

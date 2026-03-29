@@ -2,16 +2,26 @@
 import * as React from "react";
 import { Building2, Calendar } from "lucide-react";
 
-import { type EntityConfig, type CardConfig } from "@/frontend_lib/components/shared/data-table";
-import type { CrudOperation } from "@/frontend_lib/components/shared/data-table/crud-modal";
+import { 
+  type EntityConfig, 
+  type CardConfig,
+  useCrudModal,
+} from "@/frontend_lib/components/shared/data-table";
 
 import { toast } from "sonner";
 import { DepartmentsStats } from "@/frontend_lib/components/features/hr/departments/departments-stats";
-import { departmentsColumns, makeDepartmentRowActions } from "@/frontend_lib/data/hr/departments-columns";
+import { departmentsColumns } from "@/frontend_lib/data/hr/departments-columns";
 import DataViewLayout from "@/frontend_lib/components/layouts/hr/data-view-layout";
 
 // hooks
-import { useCreateDepartment, useDepartments, useDepartmentStats, type Department } from "@/frontend_lib/api/department";
+import { 
+  useCreateDepartment, 
+  useUpdateDepartment,
+  useDeleteDepartment,
+  useDepartments, 
+  useDepartmentStats, 
+  type Department 
+} from "@/frontend_lib/api/department";
 
 // ── Page Meta ─────────────────────────────────────────────────────────────────────
 const DEPARTMENT_CONFIG: EntityConfig<Department> = {
@@ -47,18 +57,6 @@ DEPARTMENT_CONFIG.formFields = [
 // ───────────────────────────────────────────────────────────────────────────────────
 
 const IMPORT_COLUMNS = ["name", "parentName"];
-
-// Row action handler - entity-specific logic
-const handleDepartmentAction = (operation: CrudOperation, dept: Department) => {
-  console.log(`${operation} department:`, dept);
-  // TODO: Implement actual logic (API calls, navigation, toasts, etc.)
-};
-
-// Row click handler - entity-specific logic
-const handleDepartmentClick = (dept: Department) => {
-  console.log("View department:", dept);
-  // TODO: Implement actual logic (API calls, navigation, dialogs, etc.)
-};
 
 // Filter configuration - entity-specific
 const filterFields = [
@@ -99,28 +97,56 @@ const listCardConfig: CardConfig<Department> = {
 
 function DepartmentsPageComponent() {
   const { data: departments, isLoading, error } = useDepartments();
-  const { data: stats, isLoading: isStatsLoading, error: statsError } = useDepartmentStats(); // Custom hook to fetch stats from /api/v1/departments/stats
-  const { mutateAsync: createDepartment } = useCreateDepartment();
+  const { data: stats, isLoading: isStatsLoading, error: statsError } = useDepartmentStats();
+  const { mutateAsync: createDepartment, isPending: isCreating } = useCreateDepartment();
+  const { mutateAsync: updateDepartment, isPending: isUpdating } = useUpdateDepartment();
+  const { mutateAsync: deleteDepartment, isPending: isDeleting } = useDeleteDepartment();
   
-  DEPARTMENT_CONFIG.onAdd = async (data) => {
-    await createDepartment(data);
-    toast.success(`Department "${data.name}" created successfully!`);
-  }
+  // Modal state management
+  const modal = useCrudModal<Department>();
+  
+  // Memoize the config to prevent re-creating handlers on every render
+  const config = React.useMemo(() => ({
+    ...DEPARTMENT_CONFIG,
+    onAdd: async (data: any) => {
+      await createDepartment(data);
+      toast.success(`Department "${data.name}" created successfully!`);
+    },
+    onEdit: async (data: any) => {
+      await updateDepartment({ id: data.id, data });
+      toast.success(`Department "${data.name}" updated successfully!`);
+      modal.closeModal();
+    },
+    onDelete: async (dept: any) => {
+      await deleteDepartment(dept.id);
+      toast.success(`Department "${dept.name}" deleted successfully!`);
+      modal.closeModal();
+    },
+    formFields: [
+      DEPARTMENT_CONFIG.formFields[0],
+      {
+        ...DEPARTMENT_CONFIG.formFields[1],
+        options: [
+          { label: "None (top-level)", value: "" },
+          ...(departments?.filter((d) => !d.parentName).map((d) => ({
+            label: d.name,
+            value: d.id,
+          })) || []),
+        ],
+      },
+    ],
+  }), [createDepartment, updateDepartment, deleteDepartment, departments, modal.closeModal]);
 
-  // Update form field options based on fetched departments
-  DEPARTMENT_CONFIG.formFields[1].options = [
-    { label: "None (top-level)", value: "" },
-    ...(departments?.filter((d) => !d.parentName).map((d) => ({
-      label: d.name,
-      value: d.id,
-    })) || []),
-  ];
+  // Memoize onImport to prevent re-creating on every render
+  const onImportHandler = React.useCallback((rows: any[]) => {
+    console.log("Imported departments:", rows);
+  }, []);
     
   return (
-    <DataViewLayout 
+      <DataViewLayout 
       isLoading={isLoading}
       error={error as Error | null}
-      config={DEPARTMENT_CONFIG}
+      config={config}
       data={departments || []}
       columns={departmentsColumns}
       defaultPageSize={20}
@@ -131,12 +157,12 @@ function DepartmentsPageComponent() {
       enableViewToggle
       exportFileName="departments"
       importTemplateColumns={IMPORT_COLUMNS}
-      rowActions={makeDepartmentRowActions(handleDepartmentAction)}
       gridCard={gridCardConfig}
       listCard={listCardConfig}
-      onRowClick={handleDepartmentClick}
-      onImport={(rows) => console.log("Imported departments:", rows)}
+      onImport={onImportHandler}
       filterFields={filterFields}
+      modal={modal}
+      modalLoading={isCreating || isUpdating || isDeleting}
     >
       <DepartmentsStats stats={stats} isLoading={isStatsLoading} error={statsError as Error | null} />
     </DataViewLayout>
