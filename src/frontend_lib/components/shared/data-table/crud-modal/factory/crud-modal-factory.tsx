@@ -63,7 +63,7 @@ export function CrudModalFactory<TData extends object>({
       }
       onClose();
     } catch (error) {
-      // Error is already shown by the global error handler from notifyError()
+      // Error is already shown by the global error handler from triggerError()
       // Keep modal open so user can retry
       setIsLoading(false);
     }

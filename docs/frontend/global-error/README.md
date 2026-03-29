@@ -1,5 +1,41 @@
 # Global Error Handling
 
+## Error Flow Diagram
+
+```
+┌─────────────────────────────────────────┐
+│  Component/API call throws an error     │
+│  (e.g., ApiError, ValidationError)      │
+└──────────────┬──────────────────────────┘
+               │
+               ↓
+┌─────────────────────────────────────────┐
+│  triggerError() / triggerValidationError()│
+│  is called (by useGenericMutation or    │
+│  manually in catch block)               │
+└──────────────┬──────────────────────────┘
+               │
+               ↓
+┌─────────────────────────────────────────┐
+│  Global Handler Callback Triggered      │
+│  (the callback set in ErrorProvider's   │
+│   useEffect via setGlobalErrorHandler)  │
+└──────────────┬──────────────────────────┘
+               │
+               ↓
+┌─────────────────────────────────────────┐
+│  Toast Shown to User                    │
+│  (via Sonner)                           │
+└─────────────────────────────────────────┘
+```
+
+**Key Points:**
+- Errors don't automatically show toasts
+- You must call `triggerError(error)` or `triggerValidationError(error)` to trigger the display
+- `useGenericMutation` calls `triggerError()` automatically
+- Manual error handling requires explicit `notify*Error()` calls
+- This separation provides flexibility and testability
+
 This document describes the centralized error handling system implemented through the `ErrorProvider` component.
 
 ## Overview
@@ -27,7 +63,7 @@ App Layout (layout.tsx)
 - **Separation of Concerns** - Error handling is separate from API/data fetching
 - **Single Responsibility** - ErrorProvider only handles errors, nothing else
 - **Extensible** - Easy to add new error types (e.g., network errors, auth errors)
-- **Module-level initialization** - Handlers set at import time, not in useEffect
+- **React lifecycle integration** - Handlers set in useEffect for proper SSR compatibility and lifecycle management
 
 ### File Structure
 
@@ -64,39 +100,42 @@ Centralizes all error handling configuration in one place, making it easy to:
 ```typescript
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Toaster, toast } from "sonner";
 import { setGlobalErrorHandler, ApiError } from "@/frontend_lib/errors/api-errors";
 import { setGlobalValidationErrorHandler, ValidationError } from "@/frontend_lib/errors/validation-errors";
 
-// API Error Handler - set at module load time
-setGlobalErrorHandler((error: ApiError) => {
-  const detail = error.details.detail || error.message;
-  const title = error.details.title;
-  
-  toast.error(detail || title, {
-    description: detail ? title : undefined,
-    duration: 5000,
-  });
-});
-
-// Validation Error Handler - set at module load time
-setGlobalValidationErrorHandler((error: ValidationError) => {
-  const fields = error.fieldErrors.map(f => f.field).join(", ");
-  const firstError = error.fieldErrors[0]?.message || error.message;
-  
-  toast.error(firstError, {
-    description: error.fieldErrors.length > 1 
-      ? `Issues with: ${fields}`
-      : undefined,
-    duration: 5000,
-  });
-});
-
 export function ErrorProvider({ children }: { children: ReactNode }) {
+  
+  useEffect(() => {
+    // 1. Setup API Error Handler
+    setGlobalErrorHandler((error: ApiError) => {
+      const detail = error.details.detail || error.message;
+      const title = error.details.title;
+      
+      toast.error(detail || title, {
+        description: detail ? title : undefined,
+        duration: 5000,
+      });
+    });
+
+    // 2. Setup Validation Error Handler
+    setGlobalValidationErrorHandler((error: ValidationError) => {  
+      const fields = error.fieldErrors.map(f => f.field).join(", ");
+      const firstError = error.fieldErrors[0]?.message || error.message;
+      
+      toast.error(firstError, {
+        description: error.fieldErrors.length > 1 
+          ? `Issues with: ${fields}`
+          : undefined,
+        duration: 5000,
+      });
+    });
+  }, []);
+  
   return (
     <>
-      <Toaster position="bottom-right" />
+      <Toaster position="bottom-right" richColors />
       {children}
     </>
   );
@@ -130,8 +169,8 @@ export const useCreateUser = () => {
 **Error Flow:**
 1. API returns RFC 7807 error response
 2. `handleResponse()` parses it and throws `ApiError`
-3. `useGenericMutation` catches it and calls `notifyError()`
-4. `notifyError()` triggers global handler set by `ErrorProvider`
+3. `useGenericMutation` catches it and calls `triggerError()`
+4. `triggerError()` triggers global handler set by `ErrorProvider`
 5. Toast is shown to user
 
 ### 2. Validation Errors
@@ -146,7 +185,7 @@ try {
 } catch (error) {
   if (error instanceof ValidationError) {
     // Automatically handled by ErrorProvider
-    notifyValidationError(error);
+    triggerValidationError(error);
   }
 }
 ```
@@ -160,7 +199,7 @@ try {
 **Error Flow:**
 1. Validation fails (client or server)
 2. `ValidationError` is created
-3. `notifyValidationError()` is called
+3. `triggerValidationError()` is called
 4. Global validation handler (set by `ErrorProvider`) is triggered
 5. Toast shows first error with list of affected fields
 
@@ -230,12 +269,26 @@ export function notifyNetworkError(error: NetworkError) {
 ```typescript
 import { setGlobalNetworkErrorHandler, NetworkError } from "@/frontend_lib/errors/network-errors";
 
-setGlobalNetworkErrorHandler((error: NetworkError) => {
-  toast.error("Network connection lost", {
-    description: error.message,
-    duration: 5000,
-  });
-});
+export function ErrorProvider({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    // ... existing handlers ...
+    
+    // 3. Setup Network Error Handler
+    setGlobalNetworkErrorHandler((error: NetworkError) => {
+      toast.error("Network connection lost", {
+        description: error.message,
+        duration: 5000,
+      });
+    });
+  }, []);
+  
+  return (
+    <>
+      <Toaster position="bottom-right" richColors />
+      {children}
+    </>
+  );
+}
 ```
 
 3. **Use in your code**:
@@ -283,16 +336,24 @@ Add error logging (Sentry, LogRocket, etc.) in ErrorProvider:
 ```typescript
 import * as Sentry from "@sentry/nextjs";
 
-setGlobalErrorHandler((error: ApiError) => {
-  // Log to Sentry
-  Sentry.captureException(error, {
-    tags: { type: "api_error" },
-    extra: { details: error.details },
-  });
+export function ErrorProvider({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    setGlobalErrorHandler((error: ApiError) => {
+      // Log to Sentry
+      Sentry.captureException(error, {
+        tags: { type: "api_error" },
+        extra: { details: error.details },
+      });
+      
+      // Show toast to user
+      toast.error(error.details.detail || error.message);
+    });
+    
+    // ... other handlers ...
+  }, []);
   
-  // Show toast to user
-  toast.error(error.details.detail || error.message);
-});
+  return <><Toaster />{children}</>;
+}
 ```
 
 ## Benefits of Centralized Error Handling
@@ -352,14 +413,16 @@ catch (error) {
 ### After (Centralized Error Handling)
 
 ```typescript
-// error-provider.tsx - ALL errors handled here
-setGlobalErrorHandler((error: ApiError) => toast.error(error.message));
-setGlobalValidationErrorHandler((error: ValidationError) => toast.error(error.message));
-setGlobalNetworkErrorHandler((error: NetworkError) => toast.error(error.message));
+// error-provider.tsx - ALL errors handled here (in useEffect)
+useEffect(() => {
+  setGlobalErrorHandler((error: ApiError) => toast.error(error.message));
+  setGlobalValidationErrorHandler((error: ValidationError) => toast.error(error.message));
+  setGlobalNetworkErrorHandler((error: NetworkError) => toast.error(error.message));
+}, []);
 
 // components - just trigger errors
-notifyError(error);           // Anywhere in the app
-notifyValidationError(error); // Anywhere in the app
+triggerError(error);           // Anywhere in the app
+triggerValidationError(error); // Anywhere in the app
 notifyNetworkError(error);    // Anywhere in the app
 ```
 
@@ -372,18 +435,19 @@ notifyNetworkError(error);    // Anywhere in the app
 ## Best Practices
 
 ### ✅ DO:
-- Keep all error handler setup in `ErrorProvider`
-- Use `notifyError()` / `notifyValidationError()` to trigger handlers
+- Keep all error handler setup in `ErrorProvider` using `useEffect`
+- Use `triggerError()` / `triggerValidationError()` to trigger handlers
 - Add new error types by extending the system (new error classes + handlers)
 - Log errors to console for debugging
 - Add error tracking services (Sentry) in `ErrorProvider`
+- Set handlers in `useEffect` for proper React lifecycle and SSR compatibility
 
 ### ❌ DON'T:
 - Don't set error handlers in multiple places
-- Don't use `toast.error()` directly in components (use `notifyError()` instead)
+- Don't use `toast.error()` directly in components (use `triggerError()` instead)
 - Don't mix error handling with business logic
 - Don't forget to add handlers for new error types
-- Don't call `setGlobalErrorHandler()` inside `useEffect()` (use module-level)
+- Don't set handlers at module-level (use `useEffect` instead for SSR safety)
 
 ## Related Documentation
 
@@ -403,14 +467,15 @@ notifyNetworkError(error);    // Anywhere in the app
 1. Check that `ErrorProvider` is wrapping your app in `layout.tsx`
 2. Check that `ErrorProvider` is the outermost provider
 3. Verify `<Toaster />` is rendered
-4. Check browser console for handler initialization logs
+4. Verify handlers are set in `useEffect` within `ErrorProvider`
+5. Check that `ErrorProvider` component has mounted
 
 ### Multiple toasts for same error
 
 **Symptoms:** Same error shows multiple toasts
 
 **Solutions:**
-1. Don't call `notifyError()` and `toast.error()` together
+1. Don't call `triggerError()` and `toast.error()` together
 2. Use `useGenericMutation` instead of manual error handling
 3. Remove duplicate error handlers
 
@@ -425,9 +490,9 @@ notifyNetworkError(error);    // Anywhere in the app
 
 ### Handler not called
 
-**Symptoms:** `notifyError()` called but handler doesn't execute
+**Symptoms:** `triggerError()` called but handler doesn't execute
 
 **Solutions:**
-1. Verify handlers are set at module-level (not in useEffect)
-2. Check that `ErrorProvider` is imported before error is triggered
-3. Ensure `setGlobalErrorHandler()` is called before app renders
+1. Verify handlers are set in `useEffect` within `ErrorProvider`
+2. Check that `ErrorProvider` has mounted before errors are triggered
+3. Ensure `ErrorProvider` wraps your entire app in `layout.tsx`

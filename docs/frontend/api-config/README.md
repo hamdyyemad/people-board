@@ -48,17 +48,17 @@ Multiple ways to import error utilities and hooks:
 
 ```typescript
 // Option 1: Direct from specific error modules (most explicit)
-import { handleResponse, ApiError, notifyError } from '@/frontend_lib/errors/api-errors';
+import { handleResponse, ApiError, triggerError } from '@/frontend_lib/errors/api-errors';
 import { ValidationError, parseValidationErrors } from '@/frontend_lib/errors/validation-errors';
 
 // Option 2: From errors index (convenient for multiple imports)
-import { ApiError, ValidationError, notifyError } from '@/frontend_lib/errors';
+import { ApiError, ValidationError, triggerError } from '@/frontend_lib/errors';
 
 // Option 3: From config (recommended for API modules)
 import { 
   handleResponse, 
   ApiError, 
-  notifyError,
+  triggerError,
   useGenericQuery,    // ← Generic query hook
   useGenericMutation  // ← Generic mutation hook
 } from '@/frontend_lib/api/config';
@@ -90,7 +90,7 @@ export async function handleResponse<T>(response: Response): Promise<T>
 
 // Global Error Notification
 export function setGlobalErrorHandler(callback: (error: ApiError) => void)
-export function notifyError(error: unknown)
+export function triggerError(error: unknown)
 ```
 
 **Responsibilities:**
@@ -114,7 +114,7 @@ export class ValidationError extends Error { ... }
 // Helpers
 export function parseValidationErrors(responseData: any): ValidationError
 export function setGlobalValidationErrorHandler(callback: (error: ValidationError) => void)
-export function notifyValidationError(error: ValidationError)
+export function triggerValidationError(error: ValidationError)
 ```
 
 **Responsibilities:**
@@ -141,7 +141,7 @@ export {
   ApiError,
   handleResponse,
   setGlobalErrorHandler,
-  notifyError,
+  triggerError,
 } from "../errors/api-errors";
 
 // React Query configuration
@@ -256,9 +256,9 @@ export const useCreateDepartment = () => {
     },
     onError: (error: unknown) => {
       if (error instanceof ApiError) {
-        notifyError(error);
+        triggerError(error);
       } else {
-        notifyError(new ApiError({
+        triggerError(new ApiError({
           title: "Error",
           status: 500,
           detail: error instanceof Error ? error.message : String(error),
@@ -351,12 +351,12 @@ export const useCreateDepartment = () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
     },
     onError: (error: unknown) => {
-      // Always call notifyError
+      // Always call triggerError
       if (error instanceof ApiError) {
-        notifyError(error);
+        triggerError(error);
       } else {
         // Fallback for unexpected errors
-        notifyError(new ApiError({
+        triggerError(new ApiError({
           title: "Error",
           status: 500,
           detail: error instanceof Error ? error.message : String(error),
@@ -384,7 +384,7 @@ handleResponse() checks res.ok
             ↓
         Mutation catches error
             ├─ onError callback fires
-            ├─ Calls notifyError()
+            ├─ Calls triggerError()
             └─ Global handler displays toast
                 ├─ Main message: error.details.detail
                 └─ Description: error.details.title
@@ -632,11 +632,11 @@ export const useDepartments = () => {
       if (error instanceof ApiError) {
         // Critical: Session expired
         if (error.statusCode === 401) {
-          notifyError(error);
+          triggerError(error);
         }
         // Critical: Server is down
         else if (error.statusCode >= 500) {
-          notifyError(error);
+          triggerError(error);
         }
         // Don't toast 403/404 - show in UI only
       }
@@ -654,8 +654,8 @@ config.ts:62 API Error Response (parsed from text): {...}
 config.ts:92 Throwing ApiError with detail: "..."
 mutations.ts:15 Mutation error caught: ApiError
 mutations.ts:16 Is ApiError? true
-mutations.ts:20 Calling notifyError with ApiError
-config.ts:119 notifyError called with: ApiError
+mutations.ts:20 Calling triggerError with ApiError
+config.ts:119 triggerError called with: ApiError
 error-provider.tsx Global API error handler triggered: ApiError
 error-provider.tsx Showing toast with detail: "..."
 ```
@@ -674,7 +674,7 @@ To debug errors:
 ```typescript
 onError: (error: unknown) => {
   if (error instanceof ApiError) {
-    notifyError(error); // Toast shown automatically
+    triggerError(error); // Toast shown automatically
   }
 }
 ```
@@ -703,7 +703,7 @@ onError: (error: unknown) => {
     if (error.details.type === 'duplicate-item') {
       // Handle duplicate errors specially
     }
-    notifyError(error);
+    triggerError(error);
   }
 }
 ```
@@ -790,9 +790,9 @@ export const useUsers = () => {
       if (error instanceof ApiError) {
         // Only show toast for unexpected errors
         if (error.statusCode === 401) {
-          notifyError(error); // User needs to login
+          triggerError(error); // User needs to login
         } else if (error.statusCode >= 500) {
-          notifyError(error); // Server is down
+          triggerError(error); // Server is down
         }
         // 403/404 = silent, show in UI only
       }

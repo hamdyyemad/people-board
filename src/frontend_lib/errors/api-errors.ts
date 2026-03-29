@@ -164,12 +164,12 @@ export function setGlobalErrorHandler(callback: (error: ApiError) => void) {
  * @example
  * onError: (error: unknown) => {
  *   if (error instanceof ApiError) {
- *     notifyError(error);
+ *     triggerError(error);
  *   }
  * }
  */
-export function notifyError(error: unknown) {
-  console.log("notifyError called with:", error);
+export function triggerError(error: unknown) {
+  console.log("triggerError called with:", error);
   console.log("errorCallback exists?", !!errorCallback);
   
   if (error instanceof ApiError) {
@@ -181,6 +181,6 @@ export function notifyError(error: unknown) {
       console.warn("errorCallback not set!");
     }
   } else {
-    console.warn("notifyError received non-ApiError:", error);
+    console.warn("triggerError received non-ApiError:", error);
   }
 }

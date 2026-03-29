@@ -169,12 +169,12 @@ export function setGlobalValidationErrorHandler(
  * @example
  * catch (error) {
  *   if (error instanceof ValidationError) {
- *     notifyValidationError(error);
+ *     triggerValidationError(error);
  *   }
  * }
  */
-export function notifyValidationError(error: ValidationError) {
-  console.log("notifyValidationError called with:", error);
+export function triggerValidationError(error: ValidationError) {
+  console.log("triggerValidationError called with:", error);
   
   if (validationErrorCallback) {
     console.log("Triggering validationErrorCallback");

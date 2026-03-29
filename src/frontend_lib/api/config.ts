@@ -7,7 +7,7 @@ import {
   UseMutationOptions,
   QueryKey,
 } from "@tanstack/react-query";
-import { ApiError, notifyError } from "../errors/api-errors";
+import { ApiError, triggerError } from "../errors/api-errors";
 
 // Re-export error handling from errors module
 export {
@@ -18,7 +18,7 @@ export {
   // Functions
   handleResponse,
   setGlobalErrorHandler,
-  notifyError,
+  triggerError,
 } from "../errors/api-errors";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -179,10 +179,10 @@ export function useGenericMutation<TData = unknown, TVariables = unknown>(
       // Show error toast unless disabled
       if (showErrorToast) {
         if (error instanceof ApiError) {
-          notifyError(error);
+          triggerError(error);
         } else {
           // Fallback for unexpected error types
-          notifyError(new ApiError({
+          triggerError(new ApiError({
             title: "Error",
             status: 500,
             detail: error instanceof Error ? error.message : String(error),

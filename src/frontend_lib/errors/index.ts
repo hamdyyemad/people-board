@@ -12,7 +12,7 @@ export {
   ApiError,
   handleResponse,
   setGlobalErrorHandler,
-  notifyError,
+  triggerError,
 } from "./api-errors";
 
 // Validation Errors
@@ -22,5 +22,5 @@ export {
   ValidationError,
   parseValidationErrors,
   setGlobalValidationErrorHandler,
-  notifyValidationError,
+  triggerValidationError,
 } from "./validation-errors";
