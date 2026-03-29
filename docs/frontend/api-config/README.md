@@ -462,14 +462,68 @@ catch (error) {
 ```typescript
 import { handleResponse } from '../config';
 
+/**
+ * CRITICAL: Why handleResponse(res) is called IMMEDIATELY after fetch()
+ * -----------------------------------------------------------------------
+ * fetch() does NOT throw on HTTP errors (400, 404, 500, etc.) - it only
+ * throws on network failures (DNS, no internet, etc.).
+ * 
+ * HTTP errors return a Response object with res.ok = false, but you must
+ * check this BEFORE trying to parse the response. Otherwise, you'll parse
+ * an error response as if it's valid data!
+ * 
+ * handleResponse() does this check for you:
+ * 1. Checks res.ok immediately
+ * 2. If false, parses RFC 7807 error and throws ApiError
+ * 3. If true, safely parses and returns data
+ * 
+ * Example: Manual error handling WITHOUT handleResponse
+ * 
+ * export async function fetchUser(id: string) {
+ *   try {
+ *     const res = await fetch(`/api/users/${id}`);
+ *     
+ *      -> ❌ ERROR: If res.ok is false, we didn't check!
+ *      -> res.json() will parse error response as data
+ *     
+ *     if (!res.ok) {
+ *       const error = await res.json();
+ *       
+ *      -> Manually create and throw ApiError
+ *       throw new ApiError({
+ *         title: error.title || "Failed to load user",
+ *         status: res.status,
+ *         detail: error.detail || "Please try again",
+ *         type: error.type,
+ *       });
+ *     }
+ *     
+ *     return res.json();
+ *   } catch (err) {
+ *     // Handle network errors
+ *     if (err instanceof ApiError) throw err;
+ *     
+ *     throw new ApiError({
+ *       title: "Network error",
+ *       status: 0,
+ *       detail: "Connection failed",
+ *     });
+ *   }
+ * }
+ * 
+ * With handleResponse, this is automatic and consistent! ✅
+ */
+
 export const fetchUsers = async (): Promise<User[]> => {
   const res = await fetch('/api/v1/users');
+  // ✅ handleResponse checks res.ok immediately
   const data = await handleResponse<{ data: User[] }>(res);
   return data.data;
 };
 
 export const fetchUserById = async (id: string): Promise<User> => {
   const res = await fetch(`/api/v1/users/${id}`);
+  // ✅ Handles 404 Not Found automatically
   const data = await handleResponse<{ data: User }>(res);
   return data.data;
 };
@@ -480,6 +534,7 @@ export const createUser = async (payload: Partial<User>): Promise<User> => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+  // ✅ Handles 409 Conflict, 422 Validation errors automatically
   const data = await handleResponse<{ data: User }>(res);
   return data.data;
 };
