@@ -32,6 +32,9 @@ export function DeleteModalBody<TData>({
           </p>
         )}
         <p className="mt-1 text-sm text-muted-foreground">
+          If it is associated with other records, <span className="text-destructive font-semibold">those records will be removed</span>.
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
           Are you sure you want to continue?
         </p>
       </div>

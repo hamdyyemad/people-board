@@ -39,7 +39,7 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
    * 
    * @param isAudit - If true, includes soft-deleted departments (audit mode). Default: false
    */
-  async findAll(isAudit: boolean = false): Promise<(Department & { parentName?: string })[]> {
+  async findAll(isAudit: boolean = false): Promise<(Department & { parentName?: DepartmentName })[]> {
     const parentDepts = alias(departmentsTable, 'parent');
     
     const whereCondition = isAudit 
@@ -62,7 +62,7 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
 
     return result.map(row => {
       const department = this.toDomain(row);
-      return Object.assign(department, { parentName: row.parentName || undefined }) as Department & { parentName?: string };
+      return Object.assign(department, { parentName: row.parentName ? DepartmentName.fromDatabase(row.parentName).getFormatted() : undefined }) as Department & { parentName?: DepartmentName };
     });
   }
 

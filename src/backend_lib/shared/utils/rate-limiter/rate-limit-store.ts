@@ -16,7 +16,7 @@ const rateLimitStore = new Map<string, RateLimitStore>();
 
 // Configuration
 export const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-export const RATE_LIMIT_MAX_REQUESTS = 10; // Max requests per window
+export const RATE_LIMIT_MAX_REQUESTS = 20; // Max requests per window
 
 /**
  * Checks if the request should be rate limited
