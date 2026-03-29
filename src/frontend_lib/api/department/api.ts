@@ -49,11 +49,59 @@
  * - Parses RFC 7807 error responses
  * - Throws properly typed ApiError
  * - Provides consistent error handling across all API calls
+ * 
+ * NOTE: Client-side validation
+ * ----------------------------
+ * These API functions AUTOMATICALLY validate payloads before making API calls.
+ * Validation happens at TWO layers:
+ * 
+ * 1. **API Layer (this file)** - Validates before fetch() is called
+ *    - Prevents invalid data from being sent to server
+ *    - Throws ValidationError immediately if data is invalid
+ *    - Automatic safety net for all API calls
+ * 
+ * 2. **Form Layer (optional but recommended)** - Validate as user types
+ *    - Better UX with immediate feedback
+ *    - Show field-specific errors in real-time
+ *    - Prevent invalid form submissions
+ * 
+ * Frontend validation schemas are SEPARATE from backend schemas to avoid
+ * coupling. This ensures the frontend won't break when migrating to Nest.js.
+ * 
+ * See validation.ts for frontend Zod schemas and validation helpers.
+ * See VALIDATION.md for architecture decision and rationale.
+ * 
+ * @example
+ * import { createDepartmentBodySchema, validateOrThrow } from './validation';
+ * 
+ * // OPTION 1: Let API layer validate automatically
+ * try {
+ *   await createDepartment(formData); // API layer validates before fetch
+ * } catch (error) {
+ *   // ValidationError or ApiError thrown automatically
+ * }
+ * 
+ * // OPTION 2: Validate in form first for better UX (recommended)
+ * try {
+ *   // Form validation (immediate feedback as user types)
+ *   const validated = validateOrThrow(createDepartmentBodySchema, formData);
+ *   
+ *   // API call (validates again as safety net)
+ *   await createDepartment(validated);
+ * } catch (error) {
+ *   // Handle validation or API errors
+ * }
  */
 
 // types
 import { Department, DepartmentStats } from './types';
 import { handleResponse } from '../config';
+import { 
+  createDepartmentBodySchema, 
+  updateDepartmentBodySchema,
+  departmentIdParamSchema,
+  validateOrThrow 
+} from './validation';
 
 /*************** Queries ***************/
 export const fetchDepartments = async (): Promise<Department[]> => {
@@ -73,6 +121,9 @@ export const fetchDepartmentStats = async (): Promise<DepartmentStats> => {
 };
 
 export const fetchDepartmentById = async (id: string): Promise<Department | undefined> => {
+  // ✅ Validate ID is a valid UUID before making request
+  validateOrThrow(departmentIdParamSchema, { id });
+  
   const res = await fetch(`/api/v1/departments/${id}`);
   // ✅ Handles 404 Not Found by throwing ApiError with proper details
   const data = await handleResponse<{ data: Department }>(res);
@@ -82,29 +133,46 @@ export const fetchDepartmentById = async (id: string): Promise<Department | unde
 
 /*************** Mutations ***************/
 export const createDepartment = async (payload: Partial<Department>): Promise<Department> => {
+  // ✅ LAYER 1: Client-side validation (before API call)
+  // Validates payload structure and throws ValidationError if invalid
+  // This prevents sending invalid data to the server
+  const validated = validateOrThrow(createDepartmentBodySchema, payload);
+  
   const res = await fetch('/api/v1/departments', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(validated), // Send validated data
   });
-  // ✅ Critical: Check for 409 Conflict (duplicate) or 422 Validation errors
-  // before trying to parse response as successful data
+  
+  // ✅ LAYER 2: Check HTTP response status (after API call)
+  // Handles 409 Conflict (duplicate), 422 Validation errors from server, etc.
   const data = await handleResponse<{ data: Department }>(res);
   return data.data;
 };
 
 export const updateDepartment = async (id: string, payload: Partial<Department>): Promise<Department> => {
+  // ✅ LAYER 1: Client-side validation (before API call)
+  // Validate ID is a valid UUID
+  validateOrThrow(departmentIdParamSchema, { id });
+  // Validate payload structure
+  const validated = validateOrThrow(updateDepartmentBodySchema, payload);
+  
   const res = await fetch(`/api/v1/departments/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(validated), // Send validated data
   });
-  // ✅ Handles 404 Not Found, 403 Forbidden, validation errors, etc.
+  
+  // ✅ LAYER 2: Check HTTP response status (after API call)
+  // Handles 404 Not Found, 403 Forbidden, 422 validation errors, etc.
   const data = await handleResponse<{ data: Department }>(res);
   return data.data;
 };
 
 export const deleteDepartment = async (id: string): Promise<Department> => {
+  // ✅ Validate ID is a valid UUID before making request
+  validateOrThrow(departmentIdParamSchema, { id });
+  
   const res = await fetch(`/api/v1/departments/${id}`, {
     method: 'DELETE',
   });

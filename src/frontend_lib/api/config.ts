@@ -9,6 +9,7 @@ import {
 
 // Re-export error handling from errors module
 import { ApiError, triggerError } from "../errors/api-errors";
+import { ValidationError, triggerValidationError } from "../errors/validation-errors";
 export {
   // Types
   type ProblemDetails,
@@ -178,7 +179,11 @@ export function useGenericMutation<TData = unknown, TVariables = unknown>(
       // Show error toast unless disabled
       if (showErrorToast) {
         if (error instanceof ApiError) {
+          // HTTP/API errors from the server
           triggerError(error);
+        } else if (error instanceof ValidationError) {
+          // Client-side validation errors
+          triggerValidationError(error);
         } else {
           // Fallback for unexpected error types
           triggerError(new ApiError({

@@ -1,39 +1,61 @@
 # Global Error Handling
 
-## Error Flow Diagram
+## Complete Error Flow Diagram
 
 ```
-┌─────────────────────────────────────────┐
-│  Component/API call throws an error     │
-│  (e.g., ApiError, ValidationError)      │
-└──────────────┬──────────────────────────┘
-               │
+User action (form submit, button click)
                ↓
 ┌─────────────────────────────────────────┐
-│  triggerError() / triggerValidationError()│
-│  is called (by useGenericMutation or    │
-│  manually in catch block)               │
+│  Component calls API function           │
+│  (e.g., createDepartment(formData))     │
 └──────────────┬──────────────────────────┘
-               │
                ↓
 ┌─────────────────────────────────────────┐
-│  Global Handler Callback Triggered      │
-│  (the callback set in ErrorProvider's   │
-│   useEffect via setGlobalErrorHandler)  │
+│  LAYER 1: Client Validation (in api.ts)│
+│  - validateOrThrow() checks payload     │
+│  - Throws ValidationError if invalid    │
 └──────────────┬──────────────────────────┘
                │
+               ↓ Validation passed
+┌─────────────────────────────────────────┐
+│  fetch() call to backend                │
+└──────────────┬──────────────────────────┘
                ↓
 ┌─────────────────────────────────────────┐
-│  Toast Shown to User                    │
-│  (via Sonner)                           │
-└─────────────────────────────────────────┘
+│  LAYER 2: Response Check (handleResponse)│
+│  - Checks res.ok                        │
+│  - Throws ApiError if HTTP error        │
+└──────────────┬──────────────────────────┘
+               │
+        ┌──────┴──────┐
+        │  Success?   │
+        └──────┬──────┘
+               │
+     ┌─────────┴─────────┐
+     │ YES               │ NO (Error thrown)
+     ↓                   ↓
+   Return data    ┌─────────────────────────────────────────┐
+   Success!       │  useGenericMutation catches error       │
+                  │  Calls notifyError() or                 │
+                  │  notifyValidationError()                │
+                  └──────────────┬──────────────────────────┘
+                                 ↓
+                  ┌─────────────────────────────────────────┐
+                  │  Global Handler Callback Triggered      │
+                  │  (set in ErrorProvider's useEffect)     │
+                  └──────────────┬──────────────────────────┘
+                                 ↓
+                  ┌─────────────────────────────────────────┐
+                  │  Toast Shown to User (via Sonner)      │
+                  └─────────────────────────────────────────┘
 ```
 
 **Key Points:**
-- Errors don't automatically show toasts
-- You must call `triggerError(error)` or `triggerValidationError(error)` to trigger the display
-- `useGenericMutation` calls `triggerError()` automatically
-- Manual error handling requires explicit `notify*Error()` calls
+- **Two automatic validation layers** provide defense in depth
+- **Layer 1** (client validation) = Prevents invalid requests, immediate feedback
+- **Layer 2** (response check) = Catches server errors, business logic errors
+- Errors don't automatically show toasts - need `notifyError()` call
+- `useGenericMutation` calls notification functions automatically
 - This separation provides flexibility and testability
 
 This document describes the centralized error handling system implemented through the `ErrorProvider` component.

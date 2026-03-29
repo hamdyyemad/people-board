@@ -169,9 +169,6 @@ export function setGlobalErrorHandler(callback: (error: ApiError) => void) {
  * }
  */
 export function triggerError(error: unknown) {
-  console.log("triggerError called with:", error);
-  console.log("errorCallback exists?", !!errorCallback);
-  
   if (error instanceof ApiError) {
     console.log("Error is ApiError, has callback?", !!errorCallback);
     if (errorCallback) {

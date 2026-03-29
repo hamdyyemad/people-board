@@ -27,12 +27,17 @@ src/frontend_lib/
 │   ├── api-errors.ts          ← API/HTTP error handling (RFC 7807)
 │   ├── validation-errors.ts   ← Form/data validation errors
 │   └── index.ts               ← Re-exports all error utilities
+├── validation/                 ← General validation utilities (NEW)
+│   ├── zod.ts                 ← Validation helpers & common schemas
+│   ├── index.ts               ← Main exports
+│   └── README.md              ← Documentation
 ├── api/
 │   ├── config.ts              ← React Query config + generic hooks (useGenericQuery, useGenericMutation)
 │   └── department/
-│       ├── api.ts             ← Fetch functions with handleResponse()
+│       ├── api.ts             ← Fetch functions with handleResponse() + validation
 │       ├── mutations.ts       ← useMutation hooks (using useGenericMutation)
 │       ├── queries.ts         ← useQuery hooks (using useGenericQuery)
+│       ├── validation.ts      ← Department-specific validation schemas
 │       ├── types.ts           ← TypeScript types
 │       └── index.ts           ← Public exports
 ```
@@ -40,14 +45,18 @@ src/frontend_lib/
 **Key Architecture Points:**
 - **ErrorProvider** wraps the entire app and handles all error types globally
 - **ApiProvider** only manages React Query client (no error handling)
+- **validation/** folder contains reusable validation utilities shared across all modules
+- **api/*/validation.ts** files contain module-specific validation schemas
 - Error handling is completely separated from API/data fetching concerns
 
 ### Import Paths
 
-Multiple ways to import error utilities and hooks:
+Multiple ways to import error utilities, validation, and hooks:
 
 ```typescript
-// Option 1: Direct from specific error modules (most explicit)
+// Option 1: Direct from specific modules (most explicit)
+import { validateOrThrow, uuidOptional } from '@/frontend_lib/validation';
+import { createDepartmentBodySchema } from '@/frontend_lib/api/department/validation';
 import { handleResponse, ApiError, triggerError } from '@/frontend_lib/errors/api-errors';
 import { ValidationError, parseValidationErrors } from '@/frontend_lib/errors/validation-errors';
 
@@ -370,10 +379,26 @@ export const useCreateDepartment = () => {
 ### 2. Error Flow Diagram
 
 ```
-API Call (fetch)
+Component calls API function (e.g., createDepartment)
     ↓
-handleResponse() checks res.ok
-    ↓
+┌─────────────────────────────────────────────────────┐
+│ LAYER 1: Client-Side Validation (in api.ts)        │
+│ - validateOrThrow() checks payload before fetch    │
+│ - Throws ValidationError if data is invalid        │
+│ - Prevents invalid data from reaching server       │
+└──────────────┬──────────────────────────────────────┘
+               │
+               ↓ Validation passed
+               │
+    API Call (fetch)
+        ↓
+┌─────────────────────────────────────────────────────┐
+│ LAYER 2: HTTP Response Validation (handleResponse) │
+│ - Checks res.ok after fetch completes              │
+│ - Parses RFC 7807 errors or network errors         │
+│ - Throws ApiError for any HTTP error               │
+└──────────────┬──────────────────────────────────────┘
+               │
     ├─ Success (res.ok === true)
     │   └─ Parse JSON and return data
     │
@@ -382,13 +407,20 @@ handleResponse() checks res.ok
         ├─ Extract: title, status, detail, type
         └─ Throw ApiError
             ↓
-        Mutation catches error
+        useGenericMutation catches error
             ├─ onError callback fires
-            ├─ Calls triggerError()
+            ├─ Calls notifyError()
             └─ Global handler displays toast
                 ├─ Main message: error.details.detail
                 └─ Description: error.details.title
 ```
+
+**Key Points:**
+- **Two validation layers** provide defense in depth
+- **Layer 1** (client validation) = Immediate feedback, prevents bad requests
+- **Layer 2** (response check) = Catches server errors, network issues, business logic errors
+- Both layers throw typed errors (ValidationError or ApiError)
+- Errors automatically trigger global error handlers → toast notifications
 
 ## RFC 7807 Error Response Format
 
@@ -455,92 +487,123 @@ catch (error) {
 
 ### Creating a New API Module
 
-**Modern Approach (Using Generic Hooks)** 🎯
+**Modern Approach (Using Generic Hooks + Two-Layer Validation)** 🎯
 
-1. **Create `api.ts`** with fetch functions:
+1. **Create `validation.ts`** with frontend schemas:
+
+```typescript
+import { z } from 'zod';
+import { ValidationError } from '@/frontend_lib/errors/validation-errors';
+
+/**
+ * Frontend Validation Schemas
+ * These are SEPARATE from backend to avoid coupling (future Nest.js migration)
+ * Backend reference: backend_lib/modules/core/validation/user-schema.ts
+ */
+
+export const createUserBodySchema = z.object({
+  name: z.string().min(2).max(100).trim(),
+  email: z.string().email(),
+  role: z.enum(['admin', 'user']),
+});
+
+export const updateUserBodySchema = z.object({
+  name: z.string().min(2).max(100).trim().optional(),
+  email: z.string().email().optional(),
+  role: z.enum(['admin', 'user']).optional(),
+});
+
+export type CreateUserBody = z.infer<typeof createUserBodySchema>;
+export type UpdateUserBody = z.infer<typeof updateUserBodySchema>;
+
+// Validation helper
+export function validateOrThrow<T>(schema: z.ZodSchema<T>, data: unknown): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const errors: Record<string, string> = {};
+    result.error.errors.forEach((err) => {
+      errors[err.path.join('.')] = err.message;
+    });
+    throw new ValidationError('Validation failed', errors);
+  }
+  return result.data;
+}
+```
+
+2. **Create `api.ts`** with fetch functions + automatic validation:
 
 ```typescript
 import { handleResponse } from '../config';
+import { 
+  createUserBodySchema, 
+  updateUserBodySchema,
+  validateOrThrow 
+} from './validation';
+import { User } from './types';
 
 /**
- * CRITICAL: Why handleResponse(res) is called IMMEDIATELY after fetch()
- * -----------------------------------------------------------------------
- * fetch() does NOT throw on HTTP errors (400, 404, 500, etc.) - it only
- * throws on network failures (DNS, no internet, etc.).
+ * IMPORTANT: Two-Layer Validation & Error Handling
+ * -------------------------------------------------
  * 
- * HTTP errors return a Response object with res.ok = false, but you must
- * check this BEFORE trying to parse the response. Otherwise, you'll parse
- * an error response as if it's valid data!
+ * LAYER 1 (Client Validation - BEFORE fetch):
+ * - validateOrThrow() checks payload structure
+ * - Throws ValidationError immediately if data is invalid
+ * - Prevents sending bad data to server
  * 
- * handleResponse() does this check for you:
- * 1. Checks res.ok immediately
- * 2. If false, parses RFC 7807 error and throws ApiError
- * 3. If true, safely parses and returns data
+ * LAYER 2 (Response Validation - AFTER fetch):
+ * - handleResponse() checks res.ok
+ * - Throws ApiError for HTTP errors (400, 404, 500, etc.)
+ * - Parses RFC 7807 error responses
  * 
- * Example: Manual error handling WITHOUT handleResponse
- * 
- * export async function fetchUser(id: string) {
- *   try {
- *     const res = await fetch(`/api/users/${id}`);
- *     
- *      -> ❌ ERROR: If res.ok is false, we didn't check!
- *      -> res.json() will parse error response as data
- *     
- *     if (!res.ok) {
- *       const error = await res.json();
- *       
- *      -> Manually create and throw ApiError
- *       throw new ApiError({
- *         title: error.title || "Failed to load user",
- *         status: res.status,
- *         detail: error.detail || "Please try again",
- *         type: error.type,
- *       });
- *     }
- *     
- *     return res.json();
- *   } catch (err) {
- *     // Handle network errors
- *     if (err instanceof ApiError) throw err;
- *     
- *     throw new ApiError({
- *       title: "Network error",
- *       status: 0,
- *       detail: "Connection failed",
- *     });
- *   }
- * }
- * 
- * With handleResponse, this is automatic and consistent! ✅
+ * Both layers provide defense in depth!
  */
 
+// Queries (no validation needed for GET requests)
 export const fetchUsers = async (): Promise<User[]> => {
   const res = await fetch('/api/v1/users');
-  // ✅ handleResponse checks res.ok immediately
   const data = await handleResponse<{ data: User[] }>(res);
   return data.data;
 };
 
 export const fetchUserById = async (id: string): Promise<User> => {
   const res = await fetch(`/api/v1/users/${id}`);
-  // ✅ Handles 404 Not Found automatically
   const data = await handleResponse<{ data: User }>(res);
   return data.data;
 };
 
+// Mutations (with automatic validation)
 export const createUser = async (payload: Partial<User>): Promise<User> => {
+  // ✅ LAYER 1: Validate before sending
+  const validated = validateOrThrow(createUserBodySchema, payload);
+  
   const res = await fetch('/api/v1/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(validated), // Send validated data
   });
-  // ✅ Handles 409 Conflict, 422 Validation errors automatically
+  
+  // ✅ LAYER 2: Check response status
+  const data = await handleResponse<{ data: User }>(res);
+  return data.data;
+};
+
+export const updateUser = async (id: string, payload: Partial<User>): Promise<User> => {
+  // ✅ LAYER 1: Validate before sending
+  const validated = validateOrThrow(updateUserBodySchema, payload);
+  
+  const res = await fetch(`/api/v1/users/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(validated), // Send validated data
+  });
+  
+  // ✅ LAYER 2: Check response status
   const data = await handleResponse<{ data: User }>(res);
   return data.data;
 };
 ```
 
-2. **Create `queries.ts`** with generic query hooks:
+3. **Create `queries.ts`** with generic query hooks:
 
 ```typescript
 import { useGenericQuery } from '../config';
@@ -582,17 +645,102 @@ function UsersPage() {
   
   const handleAdd = async (data: Partial<User>) => {
     try {
+      // API layer validates automatically before calling fetch
+      // ValidationError thrown immediately if data is invalid
+      // ApiError thrown if server rejects the request
       await createUser(data);
+      
       // Success! Modal closes automatically
       onClose();
     } catch (error) {
-      // Error toast shown automatically by useGenericMutation
-      // Modal stays open for retry
+      // Both ValidationError and ApiError handled automatically:
+      // - useGenericMutation calls notifyError() or notifyValidationError()
+      // - ErrorProvider shows toast notification
+      // - Modal stays open for retry
     }
   };
   
   return (/* ... */);
 }
+```
+
+**Optional: Add form-level validation for better UX:**
+
+```typescript
+import { createUserBodySchema, validateOrThrow } from '@/frontend_lib/api/user';
+
+function CreateUserForm() {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { mutateAsync: createUser, isPending } = useCreateUser();
+  
+  const handleSubmit = async (formData: any) => {
+    try {
+      setErrors({});
+      
+      // OPTIONAL: Validate in form first for immediate feedback
+      // This provides better UX by showing errors as user types
+      const validated = validateOrThrow(createUserBodySchema, formData);
+      
+      // API layer validates again as safety net
+      await createUser(validated);
+      
+      alert('User created!');
+      onClose();
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        // Show field-specific errors in form
+        const fieldErrors: Record<string, string> = {};
+        error.fieldErrors.forEach(({ field, message }) => {
+          fieldErrors[field] = message;
+        });
+        setErrors(fieldErrors);
+      }
+      // API errors handled automatically by useGenericMutation
+    }
+  };
+  
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(getFormData(e)); }}>
+      <input name="name" />
+      {errors.name && <span className="error">{errors.name}</span>}
+      
+      <input name="email" type="email" />
+      {errors.email && <span className="error">{errors.email}</span>}
+      
+      <button type="submit" disabled={isPending}>
+        {isPending ? 'Creating...' : 'Create User'}
+      </button>
+    </form>
+  );
+}
+```
+
+**Summary of validation layers:**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ LAYER 0 (Optional): Form-level validation                     │
+│ - Validates as user types (progressive validation)            │
+│ - Shows field-specific errors immediately                     │
+│ - Best UX but requires form code                              │
+│ - Use validateOrThrow() in form submit handler                │
+└────────────────────────────────────────────────────────────────┘
+                             ↓ Form validation passed
+┌────────────────────────────────────────────────────────────────┐
+│ LAYER 1 (Automatic): API-level validation                     │
+│ - Validates before fetch() is called (in api.ts)              │
+│ - Safety net if form validation is skipped                    │
+│ - Throws ValidationError immediately                          │
+│ - Prevents invalid data from being sent                       │
+└────────────────────────────────────────────────────────────────┘
+                             ↓ Client validation passed
+┌────────────────────────────────────────────────────────────────┐
+│ LAYER 2 (Automatic): Server response validation               │
+│ - Checks res.ok after fetch() completes (handleResponse)      │
+│ - Throws ApiError for HTTP errors                             │
+│ - Handles 422 Validation, 409 Conflict, 500 Server Error      │
+│ - Security: server always validates (never trust client)      │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ## Query Error Handling Strategy

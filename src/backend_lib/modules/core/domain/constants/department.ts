@@ -9,13 +9,13 @@
 
 // ---- Department name (value object) ----
 export const DEPARTMENT_NAME = {
-  MIN_LENGTH: 1,
-  MAX_LENGTH: 255,
+  MIN_LENGTH: 2,
+  MAX_LENGTH: 150,
 } as const;
 
 export const DEPARTMENT_NAME_MESSAGES = {
   REQUIRED: 'name is required',
-  EMPTY: 'Department name cannot be empty',
+  EMPTY: 'Department name cannot be less than 2 characters',
   TOO_LONG: `Department name cannot exceed ${DEPARTMENT_NAME.MAX_LENGTH} characters`,
 } as const;
 
