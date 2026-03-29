@@ -4,12 +4,11 @@ import {
   useMutation, 
   useQueryClient,
   UseQueryOptions,
-  UseMutationOptions,
   QueryKey,
 } from "@tanstack/react-query";
-import { ApiError, triggerError } from "../errors/api-errors";
 
 // Re-export error handling from errors module
+import { ApiError, triggerError } from "../errors/api-errors";
 export {
   // Types
   type ProblemDetails,
