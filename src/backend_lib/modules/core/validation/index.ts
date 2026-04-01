@@ -5,6 +5,8 @@ export {
   type UpdateDepartmentBody,
   departmentIdParamSchema,
   type DepartmentIdParam,
+  departmentQuerySchema,
+  type DepartmentQuery,
 } from './department-schema';
 
 export {

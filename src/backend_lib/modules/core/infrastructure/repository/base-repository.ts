@@ -1,5 +1,7 @@
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
+import type { ListingQueryInput } from '../../../../shared/listing';
+import { PaginationCursor } from '../../../../shared/listing';
 
 /**
  * Base Repository Class
@@ -96,14 +98,33 @@ export abstract class BaseRepository<T extends { id: string }> {
     return this.toDomain(row);
   }
 
-  async findAll(isAudit = false): Promise<T[]> {
-    const result = isAudit
-      ? await DrizzleClient.select().from(this.table)
-      : await DrizzleClient
-          .select()
-          .from(this.table)
-          .where(isNull(this.table.deletedAt));
-    return result.map(row => this.toDomain(row));
+  /**
+   * Returns an un-awaited Drizzle query builder with WHERE, ORDER BY, and LIMIT applied.
+   * Children call super.findAll(params), then chain .leftJoin() / .select(), and await.
+   *
+   * No params → all non-deleted rows, no pagination.
+   * With ListingQueryInput → cursor, soft-delete, order, limit+1 via buildListQuery.
+   *
+   * Simple repositories can just `await super.findAll(params)` directly.
+   */
+  findAll(params?: ListingQueryInput, isAudit: boolean = false): any {
+    if (!params) {
+      return DrizzleClient
+        .select()
+        .from(this.table)
+        .where(isAudit ? undefined : isNull(this.table.deletedAt))
+        .$dynamic();
+    }
+
+    const { where, orderBy, limit } = this.buildListQuery(params, isAudit);
+
+    return DrizzleClient
+      .select()
+      .from(this.table)
+      .where(where.length > 0 ? and(...where) : undefined)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .$dynamic();
   }
 
   async update(entity: T): Promise<T> {
@@ -122,9 +143,48 @@ export abstract class BaseRepository<T extends { id: string }> {
   }
 
   /**
-   * Convert domain entity to database persistence format
-   * Subclasses can override for custom mapping
+   * Converts ListingQueryInput into Drizzle-ready pieces.
+   * Children can also call this directly for fully custom queries.
    */
+  protected buildListQuery(params: ListingQueryInput, isAudit: boolean = false) {
+    const where: SQL[] = [];
+
+    if (!isAudit && this.table.deletedAt) {
+      where.push(isNull(this.table.deletedAt));
+    }
+
+    if (params.pagination.cursor) {
+      const { createdAt, id } = PaginationCursor.decode(params.pagination.cursor);
+      const ts = createdAt.toISOString();
+      const direction = params.pagination.direction ?? 'forward';
+
+      if (direction === 'forward') {
+        where.push(sql`(${this.table.createdAt}, ${this.table.id}) < (${ts}::timestamptz, ${id})`);
+      } else {
+        where.push(sql`(${this.table.createdAt}, ${this.table.id}) > (${ts}::timestamptz, ${id})`);
+      }
+    }
+
+    const directionFn = (params.pagination.direction ?? 'forward') === 'forward' ? desc : asc;
+
+    const orderBy: SQL[] = [];
+
+    if (params.sort?.length) {
+      for (const s of params.sort) {
+        const col = this.table[s.field];
+        if (col) {
+          orderBy.push(s.direction === 'asc' ? asc(col) : desc(col));
+        }
+      }
+    }
+
+    orderBy.push(directionFn(this.table.createdAt), directionFn(this.table.id));
+
+    const limit = params.pagination.limit + 1;
+
+    return { where, orderBy, limit };
+  }
+
   protected toPersistence(entity: T): any {
     return entity;
   }

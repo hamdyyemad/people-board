@@ -1,3 +1,5 @@
+import type { ListingQueryInput } from '@/backend_lib/shared/listing';
+
 /**
  * Base Repository Interface
  * 
@@ -29,9 +31,10 @@ export interface IBaseRepository<T extends { id: string }> {
   findByName(name: string, isAudit?: boolean): Promise<T | null>;
 
   /**
-   * Find all entities, optionally including soft-deleted ones
+   * No params → all non-deleted rows.
+   * With `ListingQueryInput` → paginated (limit+1), cursor-filtered, sorted.
    */
-  findAll(isAudit?: boolean): Promise<T[]>;
+  findAll(params?: ListingQueryInput, isAudit?: boolean): Promise<T[]>;
 
   /**
    * Update an existing entity

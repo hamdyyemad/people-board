@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../domain/constants/department';
+import { basePaginationQuerySchema } from '@/backend_lib/shared/validation/pagination-schema';
 
 // ---- Shared ----
 const uuidOptional = z
@@ -15,6 +16,20 @@ const nameSchema = z
   .min(DEPARTMENT_NAME.MIN_LENGTH, DEPARTMENT_NAME_MESSAGES.EMPTY)
   .max(DEPARTMENT_NAME.MAX_LENGTH, DEPARTMENT_NAME_MESSAGES.TOO_LONG)
   .trim();
+
+
+/**
+ * GET /departments list query. Reuses generic pagination/sort; `sortBy` is whitelisted for
+ * repository mapping. Use `uuidOptional` so `parentId=` does not fail validation.
+ */
+export const departmentQuerySchema = basePaginationQuerySchema.extend({
+  parentId: uuidOptional,
+  /** Filter field — keep loose for “search”; do not reuse strict `nameSchema` from create body. */
+  name: z.string().trim().optional(),
+  sortBy: z.enum(['createdAt', 'name', 'updatedAt', 'parentName']).default('createdAt'),
+});
+
+export type DepartmentQuery = z.infer<typeof departmentQuerySchema>;
 
 // ---- Create ----
 export const createDepartmentBodySchema = z.object({

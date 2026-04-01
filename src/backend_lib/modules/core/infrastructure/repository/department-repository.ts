@@ -1,12 +1,16 @@
-import { eq, isNull, and, count, isNotNull, sql } from 'drizzle-orm';
+import { eq, isNull, and, count, sql, ilike } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { departmentsTable } from '../databases/tables/departments-table';
-import { IDepartmentRepository } from '../../domain/ports/repositories/department-repository';
+import {
+  IDepartmentRepository,
+  type DepartmentWithParentName,
+} from '../../domain/ports/repositories/department-repository';
 import { Department } from '../../domain/entities/department';
 import { DepartmentName } from '../../domain/value-objects/department-name';
 import { BaseRepository } from './base-repository';
 import { DepartmentStatsDTO } from '../../application/dto/department-dto';
+import type { ListingQueryInput } from '../../../../shared/listing';
 
 export class DepartmentRepository extends BaseRepository<Department> implements IDepartmentRepository {
   protected table = departmentsTable;
@@ -35,35 +39,35 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
   }
 
   /**
-   * Find all departments with their parent names
-   * 
-   * @param isAudit - If true, includes soft-deleted departments (audit mode). Default: false
+   * Calls super.findAll(params) to get the base query (not awaited),
+   * then chains .leftJoin() for parent name, and awaits.
    */
-  async findAll(isAudit: boolean = false): Promise<(Department & { parentName?: DepartmentName })[]> {
+  async findAll(params?: ListingQueryInput, isAudit: boolean = false): Promise<DepartmentWithParentName[]> {
     const parentDepts = alias(departmentsTable, 'parent');
-    
-    const whereCondition = isAudit 
-      ? undefined 
-      : isNull(departmentsTable.deletedAt);
 
-    const result = await DrizzleClient
-      .select({
-        id: departmentsTable.id,
-        name: departmentsTable.name,
-        parentId: departmentsTable.parentId,
-        createdAt: departmentsTable.createdAt,
-        updatedAt: departmentsTable.updatedAt,
-        deletedAt: departmentsTable.deletedAt,
-        parentName: parentDepts.name,
-      })
-      .from(departmentsTable)
-      .leftJoin(parentDepts, eq(departmentsTable.parentId, parentDepts.id))
-      .where(whereCondition);
+    // super.findAll returns a $dynamic() query builder — not awaited
+    const query = super.findAll(params, isAudit);
 
-    return result.map(row => {
-      const department = this.toDomain(row);
-      return Object.assign(department, { parentName: row.parentName ? DepartmentName.fromDatabase(row.parentName).getFormatted() : undefined }) as Department & { parentName?: DepartmentName };
-    });
+    // Push domain-specific filters when paginated
+    if (params?.filters) {
+      const extraConditions = [];
+      for (const f of params.filters) {
+        if (f.field === 'parentId' && f.op === 'eq' && typeof f.value === 'string') {
+          extraConditions.push(eq(departmentsTable.parentId, f.value));
+        }
+        if (f.field === 'name' && f.op === 'contains' && typeof f.value === 'string' && f.value.length > 0) {
+          extraConditions.push(ilike(departmentsTable.name, `%${f.value}%`));
+        }
+      }
+      if (extraConditions.length > 0) {
+        query.where(and(...extraConditions));
+      }
+    }
+
+    // Chain the join and await
+    const result = await query.leftJoin(parentDepts, eq(departmentsTable.parentId, parentDepts.id));
+
+    return result.map((row: any) => this.toDomainWithParent(row));
   }
 
   /**
@@ -117,5 +121,18 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
       row.updatedAt,
       row.deletedAt
     );
+  }
+
+  private toDomainWithParent(row: any): DepartmentWithParentName {
+    // After .leftJoin(), Drizzle nests: { departments: {...}, parent: {...} }
+    const dept = row.departments ?? row;
+    const parent = row.parent;
+
+    const department = this.toDomain(dept);
+    return Object.assign(department, {
+      parentName: parent?.name
+        ? DepartmentName.fromDatabase(parent.name).getFormatted()
+        : undefined,
+    }) as DepartmentWithParentName;
   }
 }

@@ -7,7 +7,12 @@ import { withMiddlewares } from '@/backend_lib/middlewares';
 import { departmentService } from '@/backend_lib/modules/core/composition-root';
 
 // Validation
-import { createDepartmentBodySchema, departmentIdParamSchema } from '@/backend_lib/modules/core/validation';
+import { 
+  createDepartmentBodySchema, 
+  departmentIdParamSchema, 
+  departmentQuerySchema,
+  type DepartmentQuery,
+} from '@/backend_lib/modules/core/validation';
 import { validateRequestBody } from '@/backend_lib/shared/validation';
 import { validateRequestQueryParams } from '@/backend_lib/shared/validation/validate-request-body';
 
@@ -45,8 +50,12 @@ async function getDepartment(request: NextRequest) {
     const { id } = paramResult.data;
     department = await departmentService.getDepartmentById(id);
   } else {
+    // Validate the query parameters
+    const queryResult = validateRequestQueryParams(request, departmentQuerySchema);   
+    if ('errorResponse' in queryResult) return queryResult.errorResponse;
+
     // Get all departments
-    department = await departmentService.getDepartments();
+    department = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
   }
 
    return createSuccessResponse(
