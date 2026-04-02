@@ -11,13 +11,12 @@ import type { FrameworkRequest, FrameworkResponse } from '../adapters/current';
 import { getBody } from '../adapters/current';
 import { createErrorResponseFromDetails } from '../http/response';
 import { ValidationError } from '../exceptions';
-import type { ZodType } from 'zod';
-import { ZodIssue } from 'zod';
+import { z, ZodIssue } from 'zod';
 
-export async function validateRequestBody<T>(
+export async function validateRequestBody<TSchema extends z.ZodTypeAny>(
   request: FrameworkRequest,
-  schema: ZodType<T>
-): Promise<{ data: T } | { errorResponse: FrameworkResponse }> {
+  schema: TSchema
+): Promise<{ data: z.output<TSchema> } | { errorResponse: FrameworkResponse }> {
   let body: unknown;
   try {
     body = await getBody(request);
@@ -49,10 +48,10 @@ export async function validateRequestBody<T>(
  * - Missing or invalid params → throws ValidationError (400 via error handler)
  * - Success → returns { data: T }
  */
-export function validateRequestQueryParams<T>(
+export function validateRequestQueryParams<TSchema extends z.ZodTypeAny>(
   request: FrameworkRequest,
-  schema: ZodType<T>
-): { data: T } | { errorResponse: FrameworkResponse } {
+  schema: TSchema
+): { data: z.output<TSchema> } | { errorResponse: FrameworkResponse } {
   const { searchParams } = new URL(request.url);
   
   // Convert URLSearchParams to object
@@ -77,10 +76,10 @@ export function validateRequestQueryParams<T>(
  * - Invalid params → throws ValidationError (400 via error handler)
  * - Success → returns { data: T }
  */
-export function validateRouteParams<T>(
+export function validateRouteParams<TSchema extends z.ZodTypeAny>(
   params: Record<string, string | string[]>,
-  schema: ZodType<T>
-): { data: T } | { errorResponse: FrameworkResponse } {
+  schema: TSchema
+): { data: z.output<TSchema> } | { errorResponse: FrameworkResponse } {
   const parsed = schema.safeParse(params);
   
   if (!parsed.success) {
