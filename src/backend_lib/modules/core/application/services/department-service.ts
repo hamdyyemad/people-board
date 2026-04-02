@@ -35,8 +35,14 @@ export class DepartmentService {
    */
   async getDepartments(q: DepartmentQuery) {
     let builder = new ListingQuery()
-      .paginate(q.limit, q.cursor, q.direction)
-      .sort({ field: q.sortBy, direction: q.sortOrder });
+      .paginate(q.limit, q.cursor, q.direction);
+
+    const sortByArr = q.sortBy;
+    const sortOrderArr = q.sortOrder;
+    for (let i = 0; i < sortByArr.length; i++) {
+      const dir = sortOrderArr[i] ?? sortOrderArr[sortOrderArr.length - 1] ?? 'desc';
+      builder = builder.sort({ field: sortByArr[i], direction: dir as 'asc' | 'desc' });
+    }
 
     if (q.parentId) builder = builder.filter({ field: 'parentId', op: 'eq', value: q.parentId });
     if (q.name)     builder = builder.filter({ field: 'name', op: 'contains', value: q.name });

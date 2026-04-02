@@ -37,6 +37,12 @@ export interface IBaseRepository<T extends { id: string }> {
   findAll(params?: ListingQueryInput, isAudit?: boolean): Promise<T[]>;
 
   /**
+   * Ordered column names from the most recent `findAll` call (including tiebreakers).
+   * Use-cases pass this to `PaginationHelper.processPaginatedResults` for cursor encoding.
+   */
+  readonly lastSortFields: string[];
+
+  /**
    * Update an existing entity
    */
   update(entity: T): Promise<T>;

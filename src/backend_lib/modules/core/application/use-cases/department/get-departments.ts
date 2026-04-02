@@ -11,11 +11,17 @@ export class GetDepartmentsUseCase {
    */
   async execute(params: ListingQueryInput): Promise<PaginatedResponse<DepartmentResponseViewModel>> {
     const rows = await this.departmentRepository.findAll(params);
+    const sortFields = this.departmentRepository.lastSortFields;
 
     const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPaginatedResults(
       rows,
       params.pagination.limit,
-      params.pagination.direction ?? 'forward'
+      sortFields,
+      params.pagination.cursor,
+      (row, field) => {
+        if (field === 'name') return row.name.value;
+        return (row as Record<string, any>)[field];
+      }
     );
 
     const data = items.map(

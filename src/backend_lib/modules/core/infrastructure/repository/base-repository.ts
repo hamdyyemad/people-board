@@ -127,6 +127,15 @@ export abstract class BaseRepository<T extends { id: string }> {
       .$dynamic();
   }
 
+  /**
+   * The ordered list of sort-field names produced by the last {@link buildListQuery} call.
+   * Use-cases read this after `findAll` to pass to `PaginationHelper.processPaginatedResults`.
+   */
+  get lastSortFields(): string[] {
+    return this._lastSortFields;
+  }
+  private _lastSortFields: string[] = ['createdAt', 'id'];
+
   async update(entity: T): Promise<T> {
     await DrizzleClient
       .update(this.table)
@@ -143,7 +152,16 @@ export abstract class BaseRepository<T extends { id: string }> {
   }
 
   /**
-   * Converts ListingQueryInput into Drizzle-ready pieces.
+   * Resolve a sort/cursor field name to a Drizzle column reference.
+   * Override in child repositories for joined or computed columns
+   * (e.g. `parentName` → `parentAlias.name`).
+   */
+  protected resolveColumn(field: string): any {
+    return this.table[field];
+  }
+
+  /**
+   * Converts ListingQueryInput into Drizzle-ready pieces and records sortFields for cursor encoding.
    * Children can also call this directly for fully custom queries.
    */
   protected buildListQuery(params: ListingQueryInput, isAudit: boolean = false) {
@@ -153,36 +171,67 @@ export abstract class BaseRepository<T extends { id: string }> {
       where.push(isNull(this.table.deletedAt));
     }
 
-    if (params.pagination.cursor) {
-      const { createdAt, id } = PaginationCursor.decode(params.pagination.cursor);
-      const ts = createdAt.toISOString();
-      const direction = params.pagination.direction ?? 'forward';
-
-      if (direction === 'forward') {
-        where.push(sql`(${this.table.createdAt}, ${this.table.id}) < (${ts}::timestamptz, ${id})`);
-      } else {
-        where.push(sql`(${this.table.createdAt}, ${this.table.id}) > (${ts}::timestamptz, ${id})`);
-      }
-    }
-
-    const directionFn = (params.pagination.direction ?? 'forward') === 'forward' ? desc : asc;
-
-    const orderBy: SQL[] = [];
+    // -- Build the full ordered sort spec: user sorts first, then (createdAt, id) tiebreakers --
+    const tiebreakers = new Set(['createdAt', 'id']);
+    const effectiveSort: { field: string; direction: 'asc' | 'desc' }[] = [];
 
     if (params.sort?.length) {
       for (const s of params.sort) {
-        const col = this.table[s.field];
-        if (col) {
-          orderBy.push(s.direction === 'asc' ? asc(col) : desc(col));
-        }
+        effectiveSort.push({ field: s.field, direction: s.direction });
+        tiebreakers.delete(s.field);
       }
     }
 
-    orderBy.push(directionFn(this.table.createdAt), directionFn(this.table.id));
+    const defaultDir: 'asc' | 'desc' = (params.pagination.direction ?? 'forward') === 'forward' ? 'desc' : 'asc';
+    for (const tb of tiebreakers) {
+      effectiveSort.push({ field: tb, direction: defaultDir });
+    }
+
+    const sortFields = effectiveSort.map(s => s.field);
+    this._lastSortFields = sortFields;
+
+    // -- Compound cursor WHERE clause --
+    if (params.pagination.cursor) {
+      const cursorValues = PaginationCursor.decode(params.pagination.cursor);
+      const direction = params.pagination.direction ?? 'forward';
+
+      const colRefs: SQL[] = [];
+      const valRefs: SQL[] = [];
+
+      const timestampFields = new Set(['createdAt', 'updatedAt']);
+
+      for (const s of effectiveSort) {
+        const col = this.resolveColumn(s.field);
+        if (!col) continue;
+
+        if (timestampFields.has(s.field)) {
+          colRefs.push(sql`date_trunc('milliseconds', ${col})`);
+          const ts = new Date(cursorValues[s.field] as number).toISOString();
+          valRefs.push(sql`${ts}::timestamptz`);
+        } else {
+          colRefs.push(sql`${col}`);
+          valRefs.push(sql`${cursorValues[s.field]}`);
+        }
+      }
+
+      const colTuple = sql.join(colRefs, sql`, `);
+      const valTuple = sql.join(valRefs, sql`, `);
+      const op = direction === 'forward' ? sql`<` : sql`>`;
+
+      where.push(sql`(${colTuple}) ${op} (${valTuple})`);
+    }
+
+    // -- ORDER BY from effectiveSort (skip fields not resolvable by this repository) --
+    const orderBy: SQL[] = [];
+    for (const s of effectiveSort) {
+      const col = this.resolveColumn(s.field);
+      if (!col) continue;
+      orderBy.push(s.direction === 'asc' ? asc(col) : desc(col));
+    }
 
     const limit = params.pagination.limit + 1;
 
-    return { where, orderBy, limit };
+    return { where, orderBy, limit, sortFields };
   }
 
   protected toPersistence(entity: T): any {

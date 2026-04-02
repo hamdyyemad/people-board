@@ -14,6 +14,12 @@ import type { ListingQueryInput } from '../../../../shared/listing';
 
 export class DepartmentRepository extends BaseRepository<Department> implements IDepartmentRepository {
   protected table = departmentsTable;
+  private readonly parentAlias = alias(departmentsTable, 'parent');
+
+  protected resolveColumn(field: string): any {
+    if (field === 'parentName') return this.parentAlias.name;
+    return super.resolveColumn(field);
+  }
 
   /**
    * Find all departments under a specific parent
@@ -43,8 +49,6 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
    * then chains .leftJoin() for parent name, and awaits.
    */
   async findAll(params?: ListingQueryInput, isAudit: boolean = false): Promise<DepartmentWithParentName[]> {
-    const parentDepts = alias(departmentsTable, 'parent');
-
     // super.findAll returns a $dynamic() query builder — not awaited
     const query = super.findAll(params, isAudit);
 
@@ -65,7 +69,7 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
     }
 
     // Chain the join and await
-    const result = await query.leftJoin(parentDepts, eq(departmentsTable.parentId, parentDepts.id));
+    const result = await query.leftJoin(this.parentAlias, eq(departmentsTable.parentId, this.parentAlias.id));
 
     return result.map((row: any) => this.toDomainWithParent(row));
   }

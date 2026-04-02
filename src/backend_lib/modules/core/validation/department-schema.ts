@@ -17,19 +17,28 @@ const nameSchema = z
   .max(DEPARTMENT_NAME.MAX_LENGTH, DEPARTMENT_NAME_MESSAGES.TOO_LONG)
   .trim();
 
+const ALLOWED_DEPT_SORT_FIELDS = ['createdAt', 'name', 'updatedAt', 'parentName'] as const;
 
 /**
  * GET /departments list query. Reuses generic pagination/sort; `sortBy` is whitelisted for
  * repository mapping. Use `uuidOptional` so `parentId=` does not fail validation.
+ *
+ * `sortBy` accepts comma-separated values (e.g. `name,createdAt`). Each element is validated
+ * against the allowed column whitelist.
  */
 export const departmentQuerySchema = basePaginationQuerySchema.extend({
   parentId: uuidOptional,
-  /** Filter field — keep loose for “search”; do not reuse strict `nameSchema` from create body. */
+  /** Filter field — keep loose for "search"; do not reuse strict `nameSchema` from create body. */
   name: z.string().trim().optional(),
-  sortBy: z.enum(['createdAt', 'name', 'updatedAt', 'parentName']).default('createdAt'),
+  sortBy: z.string().default('createdAt').transform(v =>
+    v.split(',').map(s => s.trim())
+  ).refine(
+    arr => arr.every(f => (ALLOWED_DEPT_SORT_FIELDS as readonly string[]).includes(f)),
+    { message: `sortBy must be one of: ${ALLOWED_DEPT_SORT_FIELDS.join(', ')}` }
+  ),
 });
 
-export type DepartmentQuery = z.infer<typeof departmentQuerySchema>;
+export type DepartmentQuery = z.output<typeof departmentQuerySchema>;
 
 // ---- Create ----
 export const createDepartmentBodySchema = z.object({

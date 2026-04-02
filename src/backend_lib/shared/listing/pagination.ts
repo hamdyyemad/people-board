@@ -1,14 +1,17 @@
 /**
- * Cursor-based (keyset) pagination: encoding, request DTO, response shape, and helpers.
+ * Cursor-based (keyset) pagination with **compound cursors**.
  *
  * @remarks
- * **Wire format:** `${createdAt.getTime()}:${id}` as UTF-8, then standard **base64** (opaque to clients).
+ * **Wire format:** A JSON object whose keys mirror the ORDER BY columns is base64-encoded
+ * into an opaque string. Example payload for `ORDER BY name ASC, created_at DESC, id DESC`:
+ * ```json
+ * {"name":"Dept X","createdAt":1775001324774,"id":"abc-123"}
+ * ```
  *
- * **Recommended DB order:** `ORDER BY created_at DESC, id DESC` (matches composite indexes). Forward page:
- * `(created_at, id) < ($cursorCreatedAt, $cursorId)` after decoding {@link PaginationCursor}.
+ * The cursor must always encode **every** column that appears in `ORDER BY`, including the
+ * `(createdAt, id)` tiebreakers that the repository appends automatically.
  *
  * @see {@link PaginationHelper.processPaginatedResults} — trim `limit + 1` rows and set cursors
- * @see {@link PaginationQueryDTO.getCursorData} — decode cursor for repositories
  */
 
 export type PaginationDirection = 'forward' | 'backward';
@@ -58,33 +61,36 @@ export interface PaginatedResponse<T> {
 }
 
 /**
- * Encodes and decodes opaque cursors (`timestampMs:uuid` → base64).
- *
- * @remarks
- * - **Encode** when building `nextCursor` / `prevCursor` after a query.
- * - **Decode** in the use case or repository when `cursor` is present (or use {@link PaginationQueryDTO.getCursorData}).
+ * Compound cursor: encodes/decodes an ordered set of column values as
+ * base64-encoded JSON. Date values are serialised as epoch-milliseconds
+ * so they survive the round-trip without precision loss.
  */
 export const PaginationCursor = {
-  encode(createdAt: Date, id: string): string {
-    return Buffer.from(`${createdAt.getTime()}:${id}`, 'utf8').toString('base64');
+  /**
+   * Build an opaque cursor from the sort-column values of a single row.
+   *
+   * @param values - Column name → value map. `Date` is converted to ms epoch automatically.
+   */
+  encode(values: Record<string, unknown>): string {
+    const serialised: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(values)) {
+      serialised[key] = val instanceof Date ? val.getTime() : val;
+    }
+    return Buffer.from(JSON.stringify(serialised), 'utf8').toString('base64');
   },
 
-  decode(cursor: string): { createdAt: Date; id: string } {
+  /**
+   * Decode an opaque cursor back to the column-value map.
+   * Callers must know which keys are timestamps and convert them back to `Date` as needed.
+   */
+  decode(cursor: string): Record<string, unknown> {
     try {
-      const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
-      const [timestamp, ...idParts] = decoded.split(':');
-      const id = idParts.join(':');
-
-      if (!timestamp || !id) {
-        throw new Error('Invalid cursor format');
+      const json = Buffer.from(cursor, 'base64').toString('utf-8');
+      const parsed = JSON.parse(json);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        throw new Error('Cursor payload must be a JSON object');
       }
-
-      const createdAt = new Date(parseInt(timestamp, 10));
-      if (Number.isNaN(createdAt.getTime())) {
-        throw new Error('Invalid timestamp in cursor');
-      }
-
-      return { createdAt, id };
+      return parsed as Record<string, unknown>;
     } catch (error) {
       throw new Error(
         `Failed to decode cursor: ${error instanceof Error ? error.message : String(error)}`
@@ -120,10 +126,10 @@ export class PaginationQueryDTO implements PaginationQueryInput {
   }
 
   /**
-   * @returns Decoded cursor for keyset `WHERE`, or `null` on the first page.
-   * @throws If `cursor` is set but malformed (same as {@link PaginationCursor.decode}).
+   * @returns Decoded compound cursor values, or `null` on the first page.
+   * @throws If `cursor` is set but malformed.
    */
-  getCursorData(): { createdAt: Date; id: string } | null {
+  getCursorData(): Record<string, unknown> | null {
     if (!this.cursor) return null;
     return PaginationCursor.decode(this.cursor);
   }
@@ -134,25 +140,23 @@ export class PaginationQueryDTO implements PaginationQueryInput {
  */
 export class PaginationHelper {
   /**
-   * Truncates to `limit` items, sets `hasMore` from the `(limit + 1)`-th row, and fills cursor hints.
+   * Truncates to `limit` items, detects `hasMore`, and builds compound cursors.
    *
-   * @param entities - Rows from DB, typically ordered `created_at DESC, id DESC`, length ≤ `limit + 1`.
-   * @param limit - Same as request limit (not `limit + 1`).
-   *
-   * @example
-   * ```ts
-   * const rows = await repo.findPage({ ... }); // fetch limit + 1
-   * const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPaginatedResults(
-   *   rows,
-   *   query.limit,
-   *   query.direction,
-   * );
-   * ```
+   * @param entities  - Rows from DB (length ≤ `limit + 1`).
+   * @param limit     - Requested page size (not `limit + 1`).
+   * @param sortFields - Ordered column names that match the ORDER BY (including tiebreakers).
+   *                     Used to extract cursor values from each row.
+   * @param requestCursor - Pass the original request cursor so we know if this is page 1.
+   * @param extractValue  - Optional function to pull a JSON-safe scalar from an entity for a
+   *                        given sort field. Useful when domain entities wrap fields in value
+   *                        objects (e.g. `DepartmentName`). When omitted, `row[field]` is used.
    */
-  static processPaginatedResults<T extends { id: string; createdAt: Date }>(
+  static processPaginatedResults<T extends Record<string, any>>(
     entities: T[],
     limit: number,
-    _direction: PaginationDirection = 'forward'
+    sortFields: string[],
+    requestCursor?: string | undefined,
+    extractValue?: (row: T, field: string) => unknown
   ): {
     items: T[];
     hasMore: boolean;
@@ -162,14 +166,24 @@ export class PaginationHelper {
     const hasMore = entities.length > limit;
     const items = entities.slice(0, limit);
 
+    const getValue = extractValue ?? ((row: T, field: string) => row[field]);
+
+    const extractCursorValues = (row: T): Record<string, unknown> => {
+      const values: Record<string, unknown> = {};
+      for (const field of sortFields) {
+        values[field] = getValue(row, field);
+      }
+      return values;
+    };
+
     const nextCursor =
       hasMore && items.length > 0
-        ? PaginationCursor.encode(items[items.length - 1].createdAt, items[items.length - 1].id)
+        ? PaginationCursor.encode(extractCursorValues(items[items.length - 1]))
         : undefined;
 
     const prevCursor =
-      items.length > 0
-        ? PaginationCursor.encode(items[0].createdAt, items[0].id)
+      requestCursor && items.length > 0
+        ? PaginationCursor.encode(extractCursorValues(items[0]))
         : undefined;
 
     return {
