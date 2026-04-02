@@ -107,9 +107,15 @@ export abstract class BaseRepository<T extends { id: string }> {
    *
    * Simple repositories can just `await super.findAll(params)` directly.
    */
-  findAll(params?: ListingQueryInput, isAudit: boolean = false): any {
+  findAll(params?: ListingQueryInput, isAudit: boolean = false, projection?: Record<string, any>): any {
     if (!params) {
-      return DrizzleClient
+      return projection ? DrizzleClient
+        .select(projection)
+        .from(this.table)
+        .where(isAudit ? undefined : isNull(this.table.deletedAt))
+        .$dynamic()
+        : 
+        DrizzleClient
         .select()
         .from(this.table)
         .where(isAudit ? undefined : isNull(this.table.deletedAt))
@@ -118,7 +124,15 @@ export abstract class BaseRepository<T extends { id: string }> {
 
     const { where, orderBy, limit } = this.buildListQuery(params, isAudit);
 
-    return DrizzleClient
+    return projection ? DrizzleClient
+      .select(projection)
+      .from(this.table)
+      .where(where.length > 0 ? and(...where) : undefined)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .$dynamic()
+      :
+      DrizzleClient
       .select()
       .from(this.table)
       .where(where.length > 0 ? and(...where) : undefined)

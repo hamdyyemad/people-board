@@ -31,10 +31,13 @@ export interface IBaseRepository<T extends { id: string }> {
   findByName(name: string, isAudit?: boolean): Promise<T | null>;
 
   /**
+   * @param params - Pagination, sorting, and filtering inputs
+   * @param isAudit - Include soft-deleted records
+   * @param projection - Optional explicitly defined columns to select
    * No params → all non-deleted rows.
    * With `ListingQueryInput` → paginated (limit+1), cursor-filtered, sorted.
    */
-  findAll(params?: ListingQueryInput, isAudit?: boolean): Promise<T[]>;
+  findAll(params?: ListingQueryInput, isAudit?: boolean, projection?: Record<string, any>): Promise<T[]>;
 
   /**
    * Ordered column names from the most recent `findAll` call (including tiebreakers).

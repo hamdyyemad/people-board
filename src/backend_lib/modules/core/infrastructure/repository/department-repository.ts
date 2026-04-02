@@ -49,8 +49,19 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
    * then chains .leftJoin() for parent name, and awaits.
    */
   async findAll(params?: ListingQueryInput, isAudit: boolean = false): Promise<DepartmentWithParentName[]> {
+    // To remove extra unused columns from the join, we can specify a projection of only the needed fields.
+    const projection = {
+      id: departmentsTable.id,
+      name: departmentsTable.name,
+      parentId: departmentsTable.parentId,
+      parentName: this.parentAlias.name, // Alias for joined parent name
+      createdAt: departmentsTable.createdAt,
+      updatedAt: departmentsTable.updatedAt,
+      deletedAt: departmentsTable.deletedAt,
+    }
+    
     // super.findAll returns a $dynamic() query builder — not awaited
-    const query = super.findAll(params, isAudit);
+    const query = super.findAll(params, isAudit, projection);
 
     // Push domain-specific filters when paginated
     if (params?.filters) {
@@ -128,14 +139,12 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
   }
 
   private toDomainWithParent(row: any): DepartmentWithParentName {
-    // After .leftJoin(), Drizzle nests: { departments: {...}, parent: {...} }
-    const dept = row.departments ?? row;
-    const parent = row.parent;
-
-    const department = this.toDomain(dept);
+    // With projection, row is flat: { id, name, parentId, parentName, createdAt, ... }
+    // parentName comes directly from the projection (this.parentAlias.name)
+    const department = this.toDomain(row);
     return Object.assign(department, {
-      parentName: parent?.name
-        ? DepartmentName.fromDatabase(parent.name).getFormatted()
+      parentName: row.parentName
+        ? DepartmentName.fromDatabase(row.parentName).getFormatted()
         : undefined,
     }) as DepartmentWithParentName;
   }
