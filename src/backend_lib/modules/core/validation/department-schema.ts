@@ -27,6 +27,7 @@ const ALLOWED_DEPT_SORT_FIELDS = ['createdAt', 'name', 'updatedAt', 'parentName'
  * against the allowed column whitelist.
  */
 export const departmentQuerySchema = basePaginationQuerySchema.extend({
+  id: uuidOptional,
   parentId: uuidOptional,
   /** Filter field — keep loose for "search"; do not reuse strict `nameSchema` from create body. */
   name: z.string().trim().optional(),

@@ -119,6 +119,18 @@ export class ListingQuery<F extends string = string> {
   }
 
   /**
+   * Appends sort keys from parallel arrays of fields and directions.
+   * If directions are fewer than fields, it falls back to the last provided direction, or 'desc'.
+   */
+  sortFromArrays(fields: F[] = [], directions: string[] = []): this {
+    for (let i = 0; i < fields.length; i++) {
+      const dir = directions[i] ?? directions[directions.length - 1] ?? 'desc';
+      this.sort({ field: fields[i], direction: dir as 'asc' | 'desc' });
+    }
+    return this;
+  }
+
+  /**
    * Appends multiple sort keys at once.
    */
   sorts(specs: Iterable<SortSpec<F>> | SortSpec<F>[]): this {

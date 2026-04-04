@@ -185,18 +185,42 @@ export abstract class BaseRepository<T extends { id: string }> {
       where.push(isNull(this.table.deletedAt));
     }
 
+    // -- Resolve the authoritative direction --------------------------------
+    // Priority: explicit query-param > direction embedded in the cursor > default forward.
+    // We decode the cursor here (if present) purely to read its embedded _dir;
+    // the actual cursor values are decoded again below for the WHERE clause.
+    let direction: 'forward' | 'backward' = params.pagination.direction ?? 'forward';
+    let preDecodedCursor: ReturnType<typeof PaginationCursor.decode> | null = null;
+
+    if (params.pagination.cursor) {
+      preDecodedCursor = PaginationCursor.decode(params.pagination.cursor);
+      // Cursor-embedded direction wins only when no explicit param was sent.
+      if (!params.pagination.direction) {
+        direction = preDecodedCursor.direction;
+      }
+    }
+
+    const isBackward = direction === 'backward';
+
     // -- Build the full ordered sort spec: user sorts first, then (createdAt, id) tiebreakers --
+    // For backward pagination every sort direction is flipped so the DB returns
+    // the N rows *closest* to the cursor in reversed order.
+    // processPaginatedResults reverses the array after the fetch to restore
+    // the original display order.
     const tiebreakers = new Set(['createdAt', 'id']);
     const effectiveSort: { field: string; direction: 'asc' | 'desc' }[] = [];
 
     if (params.sort?.length) {
       for (const s of params.sort) {
-        effectiveSort.push({ field: s.field, direction: s.direction });
+        const dir: 'asc' | 'desc' = isBackward
+          ? (s.direction === 'asc' ? 'desc' : 'asc')
+          : s.direction;
+        effectiveSort.push({ field: s.field, direction: dir });
         tiebreakers.delete(s.field);
       }
     }
 
-    const defaultDir: 'asc' | 'desc' = (params.pagination.direction ?? 'forward') === 'forward' ? 'desc' : 'asc';
+    const defaultDir: 'asc' | 'desc' = isBackward ? 'asc' : 'desc';
     for (const tb of tiebreakers) {
       effectiveSort.push({ field: tb, direction: defaultDir });
     }
@@ -204,14 +228,11 @@ export abstract class BaseRepository<T extends { id: string }> {
     const sortFields = effectiveSort.map(s => s.field);
     this._lastSortFields = sortFields;
 
-    // -- Compound cursor WHERE clause --
-    if (params.pagination.cursor) {
-      const cursorValues = PaginationCursor.decode(params.pagination.cursor);
-      const direction = params.pagination.direction ?? 'forward';
-
+    // -- Compound cursor WHERE clause ---------------------------------------
+    if (preDecodedCursor) {
+      const cursorValues = preDecodedCursor.values;
       const colRefs: SQL[] = [];
       const valRefs: SQL[] = [];
-
       const timestampFields = new Set(['createdAt', 'updatedAt']);
 
       for (const s of effectiveSort) {
@@ -230,12 +251,12 @@ export abstract class BaseRepository<T extends { id: string }> {
 
       const colTuple = sql.join(colRefs, sql`, `);
       const valTuple = sql.join(valRefs, sql`, `);
-      const op = direction === 'forward' ? sql`<` : sql`>`;
+      const op = isBackward ? sql`>` : sql`<`;
 
       where.push(sql`(${colTuple}) ${op} (${valTuple})`);
     }
 
-    // -- ORDER BY from effectiveSort (skip fields not resolvable by this repository) --
+    // -- ORDER BY -----------------------------------------------------------
     const orderBy: SQL[] = [];
     for (const s of effectiveSort) {
       const col = this.resolveColumn(s.field);

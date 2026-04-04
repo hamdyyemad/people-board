@@ -34,16 +34,23 @@ export class DepartmentService {
    * No intermediate mapping needed.
    */
   async getDepartments(q: DepartmentQuery) {
-    let builder = new ListingQuery()
-      .paginate(q.limit, q.cursor, q.direction);
+    // Early exit: If a specific ID is provided, bypass listing logic
+    if(q.id) {
+      const department = await this.getDepartmentById(q.id);
 
-    const sortByArr = q.sortBy;
-    const sortOrderArr = q.sortOrder;
-    for (let i = 0; i < sortByArr.length; i++) {
-      const dir = sortOrderArr[i] ?? sortOrderArr[sortOrderArr.length - 1] ?? 'desc';
-      builder = builder.sort({ field: sortByArr[i], direction: dir as 'asc' | 'desc' });
+      return {
+        data: department ? [department] : [],
+        nextCursor: null, // Since there's only max 1 result, there is no next page
+        prevCursor: null, // Since there's only max 1 result, there is no previous page
+        total: department ? 1 : 0 // Include this if your DTO expects a total count
+      };
     }
 
+    let builder = new ListingQuery()
+      .paginate(q.limit, q.cursor, q.direction)
+      .sortFromArrays(q.sortBy, q.sortOrder);
+
+    // Apply filters based on query parameters. The repository will combine them with AND. 
     if (q.parentId) builder = builder.filter({ field: 'parentId', op: 'eq', value: q.parentId });
     if (q.name)     builder = builder.filter({ field: 'name', op: 'contains', value: q.name });
 

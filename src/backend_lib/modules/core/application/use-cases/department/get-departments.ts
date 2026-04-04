@@ -1,6 +1,6 @@
 import type { IDepartmentRepository } from '../../../domain/ports/repositories/department-repository';
 import { DepartmentResponseViewModel } from '../../dto/department-dto';
-import { PaginationHelper, type ListingQueryInput, type PaginatedResponse } from '@/backend_lib/shared/listing';
+import { PaginationCursor, PaginationHelper, type ListingQueryInput, type PaginatedResponse } from '@/backend_lib/shared/listing';
 
 export class GetDepartmentsUseCase {
   constructor(private readonly departmentRepository: IDepartmentRepository) {}
@@ -13,6 +13,14 @@ export class GetDepartmentsUseCase {
     const rows = await this.departmentRepository.findAll(params);
     const sortFields = this.departmentRepository.lastSortFields;
 
+    // Resolve the actual direction used — cursor-embedded direction is the authoritative
+    // source when no explicit direction param was sent (same logic as base-repository).
+    const effectiveDirection =
+      params.pagination.direction ??
+      (params.pagination.cursor
+        ? PaginationCursor.decode(params.pagination.cursor).direction
+        : 'forward');
+
     const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPaginatedResults(
       rows,
       params.pagination.limit,
@@ -21,7 +29,8 @@ export class GetDepartmentsUseCase {
       (row, field) => {
         if (field === 'name') return row.name.value;
         return (row as Record<string, any>)[field];
-      }
+      },
+      effectiveDirection,
     );
 
     const data = items.map(

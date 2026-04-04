@@ -9,7 +9,6 @@ import { departmentService } from '@/backend_lib/modules/core/composition-root';
 // Validation
 import { 
   createDepartmentBodySchema, 
-  departmentIdParamSchema, 
   departmentQuerySchema,
   type DepartmentQuery,
 } from '@/backend_lib/modules/core/validation';
@@ -36,27 +35,13 @@ async function createDepartment(request: NextRequest) {
 }
 
 async function getDepartment(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const hasId = searchParams.has('id');
+  // Validate query parameters
+  const queryResult = validateRequestQueryParams(request, departmentQuerySchema);   
+  if ('errorResponse' in queryResult) return queryResult.errorResponse;
 
-  let department;
-
-   if (hasId) {
-    // Validate the ID parameter
-    const paramResult = validateRequestQueryParams(request, departmentIdParamSchema);
-    if ('errorResponse' in paramResult) return paramResult.errorResponse;
-
-    // Get single department by ID
-    const { id } = paramResult.data;
-    department = await departmentService.getDepartmentById(id);
-  } else {
-    // Validate the query parameters
-    const queryResult = validateRequestQueryParams(request, departmentQuerySchema);   
-    if ('errorResponse' in queryResult) return queryResult.errorResponse;
-
-    // Get all departments
-    department = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
-  }
+  // Get all departments
+  const department = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
+  
 
    return createSuccessResponse(
     request,
