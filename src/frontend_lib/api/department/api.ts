@@ -96,20 +96,38 @@
 // types
 import { Department, DepartmentStats } from './types';
 import { handleResponse } from '../config';
-import { 
-  createDepartmentBodySchema, 
+import {
+  createDepartmentBodySchema,
   updateDepartmentBodySchema,
   departmentIdParamSchema,
-  validateOrThrow 
+  validateOrThrow,
 } from './validation';
+import { Pagination } from '@/frontend_lib/types';
+import { buildListSearchParams, type ListParams } from '../params';
+
+/**
+ * Department-specific list query params.
+ * Extends the generic {@link ListParams} with department filters.
+ * `sortBy` is narrowed to the columns the backend whitelists.
+ */
+export interface DepartmentListParams extends ListParams {
+  sortBy?: 'createdAt' | 'name' | 'updatedAt';
+  /** Filter by parent department UUID. Pass empty string or undefined to skip. */
+  parentId?: string;
+  /** Partial name search (case-insensitive). */
+  name?: string;
+}
 
 /*************** Queries ***************/
-export const fetchDepartments = async (): Promise<Department[]> => {
-  const res = await fetch('/api/v1/departments');
+export const fetchDepartments = async (
+  params: DepartmentListParams = {}
+): Promise<Pagination<Department>> => {
+  const search = buildListSearchParams(params);
+  const res = await fetch(`/api/v1/departments?${search}`);
   // ✅ handleResponse checks res.ok immediately, before parsing JSON
   // If res.ok is false (HTTP error), it parses the error and throws ApiError
   // If res.ok is true, it safely parses and returns the data
-  const data = await handleResponse<{ data: Department[] }>(res);
+  const data = await handleResponse<{ data: Pagination<Department> }>(res);
   return data.data;
 };
 

@@ -10,41 +10,37 @@ interface UseDataTableColumnsProps<TData> {
   rowActions?: (data: TData, table: Table<TData>) => React.ReactNode;
 }
 
-// Memoized header checkbox - uses table reference comparison
-const SelectAllCheckbox = React.memo(
-  ({ table }: { table: Table<any> }) => {
-    const isAllSelected = table.getIsAllPageRowsSelected();
-    const isSomeSelected = table.getIsSomePageRowsSelected();
-    
-    return (
-      <Checkbox
-        checked={isAllSelected || (isSomeSelected && "indeterminate")}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-        className="translate-y-[2px]"
-      />
-    );
-  }
-);
-SelectAllCheckbox.displayName = "SelectAllCheckbox";
+// Not memoized — table and row are mutable TanStack objects whose references
+// never change even when selection state updates. Memoizing against a stable
+// reference means the comparator always sees "no change" and skips the re-render,
+// leaving checkboxes visually stale. Let the parent's re-render propagate.
+function SelectAllCheckbox({ table }: { table: Table<any> }) {
+  const isAllSelected = table.getIsAllPageRowsSelected();
+  const isSomeSelected = table.getIsSomePageRowsSelected();
 
-// Memoized row checkbox - uses row id for comparison
-const RowSelectCheckbox = React.memo(
-  ({ row }: { row: any }) => {
-    const isSelected = row.getIsSelected();
-    
-    return (
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        className="translate-y-[2px]"
-        onClick={(e) => e.stopPropagation()}
-      />
-    );
-  }
-);
-RowSelectCheckbox.displayName = "RowSelectCheckbox";
+  return (
+    <Checkbox
+      checked={isAllSelected || (isSomeSelected && "indeterminate")}
+      onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+      aria-label="Select all"
+      className="translate-y-[2px]"
+    />
+  );
+}
+
+function RowSelectCheckbox({ row }: { row: any }) {
+  const isSelected = row.getIsSelected();
+
+  return (
+    <Checkbox
+      checked={isSelected}
+      onCheckedChange={(value) => row.toggleSelected(!!value)}
+      aria-label="Select row"
+      className="translate-y-[2px]"
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+}
 
 export function useDataTableColumns<TData>({
   userColumns,

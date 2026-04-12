@@ -198,36 +198,9 @@ function DataTableDisplayFactoryComponent<TData>({
   }
 }
 
-// Memoize with custom comparison that checks actual row data
-export const DataTableDisplayFactory = React.memo(
-  DataTableDisplayFactoryComponent,
-  (prevProps, nextProps) => {
-    // Compare non-table props
-    if (
-      prevProps.columnCount !== nextProps.columnCount ||
-      prevProps.onRowClick !== nextProps.onRowClick ||
-      prevProps.listCard !== nextProps.listCard ||
-      prevProps.gridCard !== nextProps.gridCard ||
-      prevProps.hasListView !== nextProps.hasListView ||
-      prevProps.hasGridView !== nextProps.hasGridView ||
-      prevProps.enableViewToggle !== nextProps.enableViewToggle
-    ) {
-      return false;
-    }
-    
-    // Compare actual row data from table
-    const prevRows = prevProps.table.getRowModel().rows;
-    const nextRows = nextProps.table.getRowModel().rows;
-    
-    // If row count changed, re-render
-    if (prevRows.length !== nextRows.length) return false;
-    
-    // Compare row IDs to detect data changes
-    for (let i = 0; i < prevRows.length; i++) {
-      if (prevRows[i].id !== nextRows[i].id) return false;
-    }
-    
-    // No changes detected, skip re-render
-    return true;
-  }
-) as typeof DataTableDisplayFactoryComponent;
+// Not memoized — the table prop is a mutable TanStack object whose reference
+// never changes even when data updates. Any comparator reading getRowModel()
+// would see the already-updated rows on both sides (prev and next), making it
+// impossible to detect a page change. Let DataTable's memo gate re-renders;
+// this component should always render fresh when its parent does.
+export const DataTableDisplayFactory = DataTableDisplayFactoryComponent;

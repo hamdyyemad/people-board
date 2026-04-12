@@ -14,13 +14,14 @@ import { departmentsColumns } from "@/frontend_lib/data/hr/departments-columns";
 import DataViewLayout from "@/frontend_lib/components/layouts/hr/data-view-layout";
 
 // hooks
-import { 
-  useCreateDepartment, 
+import {
+  useCreateDepartment,
   useUpdateDepartment,
   useDeleteDepartment,
-  useDepartments, 
-  useDepartmentStats, 
-  type Department 
+  useDepartments,
+  useDepartmentStats,
+  type Department,
+  type DepartmentListParams,
 } from "@/frontend_lib/api/department";
 
 // ── Page Meta ─────────────────────────────────────────────────────────────────────
@@ -95,16 +96,58 @@ const listCardConfig: CardConfig<Department> = {
   ],
 };
 
+const DEFAULT_PAGE_SIZE = 20;
+
 function DepartmentsPageComponent() {
-  const { data: departments, isLoading, error } = useDepartments();
+  // ── Server pagination state ──────────────────────────────────────────────
+  const [params, setParams] = React.useState<DepartmentListParams>({
+    limit: DEFAULT_PAGE_SIZE,
+  });
+
+  // Plain state — intentionally resets to 1 on every mount so the displayed
+  // page number always matches the loaded data when the user navigates back.
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  const { data: { data: departments = [], pagination } = {}, isLoading, isFetching, error } = useDepartments(params);
+
+  // Build the serverPagination object that DataViewLayout / DataTable consume.
+  // Wrapped in useMemo so the object reference is stable between renders —
+  // only changes when `pagination`, `params.limit`, or `currentPage` changes.
+  const serverPagination = React.useMemo(() => ({
+    meta: pagination ?? { hasMore: false, count: 0 },
+    currentPage,
+    onNext: () => {
+      setCurrentPage((p) => p + 1);
+      setParams((p) => ({
+        ...p,
+        cursor: pagination?.nextCursor,
+        direction: "forward" as const,
+      }));
+    },
+    onPrev: () => {
+      setCurrentPage((p) => Math.max(1, p - 1));
+      setParams((p) => ({
+        ...p,
+        cursor: pagination?.prevCursor,
+        direction: "backward" as const,
+      }));
+    },
+    onLimitChange: (limit: number) => {
+      // Reset cursor and page number when page size changes
+      setCurrentPage(1);
+      setParams({ limit });
+    },
+  }), [pagination, currentPage]); // currentPage in deps so controls re-render on page change
+  // ────────────────────────────────────────────────────────────────────────
+
   const { data: stats, isLoading: isStatsLoading, error: statsError } = useDepartmentStats();
   const { mutateAsync: createDepartment, isPending: isCreating } = useCreateDepartment();
   const { mutateAsync: updateDepartment, isPending: isUpdating } = useUpdateDepartment();
   const { mutateAsync: deleteDepartment, isPending: isDeleting } = useDeleteDepartment();
-  
+
   // Modal state management
   const modal = useCrudModal<Department>();
-  
+
   // Memoize the config to prevent re-creating handlers on every render
   const config = React.useMemo(() => ({
     ...DEPARTMENT_CONFIG,
@@ -141,15 +184,17 @@ function DepartmentsPageComponent() {
   const onImportHandler = React.useCallback((rows: any[]) => {
     console.log("Imported departments:", rows);
   }, []);
-    
+
   return (
-      <DataViewLayout 
+    <DataViewLayout
       isLoading={isLoading}
+      isFetching={isFetching}
       error={error as Error | null}
       config={config}
-      data={departments || []}
+      data={departments}
       columns={departmentsColumns}
-      defaultPageSize={20}
+      defaultPageSize={params.limit ?? DEFAULT_PAGE_SIZE}
+      serverPagination={serverPagination}
       enableRowSelection
       enableColumnVisibility
       enableExport

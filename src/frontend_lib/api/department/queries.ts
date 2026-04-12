@@ -1,16 +1,27 @@
 // hooks
-import { useGenericQuery } from '../config';
-import { fetchDepartmentById, fetchDepartments, fetchDepartmentStats } from './api';
+import { useGenericQuery, usePaginatedQuery } from '../config';
+import {
+  fetchDepartmentById,
+  fetchDepartments,
+  fetchDepartmentStats,
+  type DepartmentListParams,
+} from './api';
 
 /*************** Query hooks to fetch department data ***************/
 
 /**
- * Fetch all departments
- * Error handling: Component should check isError state and display error UI
+ * Paginated department list.
+ *
+ * Pass a memoised `params` object (e.g. from `useMemo`) so the query key stays
+ * stable across renders and React Query only refetches when a param actually changes.
+ *
+ * @example
+ * const params = useMemo(() => ({ limit: 20, cursor, sortBy: 'name' }), [cursor]);
+ * const { data, isLoading } = useDepartments(params);
+ * const { data: departments, pagination } = data ?? {};
  */
-export const useDepartments = () => {
-  return useGenericQuery(['departments'], fetchDepartments);
-};
+export const useDepartments = (params: DepartmentListParams = {}) =>
+  usePaginatedQuery(['departments'], fetchDepartments, params);
 
 /**
  * Fetch department statistics

@@ -15,4 +15,5 @@ export type {
   CardConfig,
   CardBadgeConfig,
   CardFieldConfig,
+  ServerPaginationProps,
 } from "./types";

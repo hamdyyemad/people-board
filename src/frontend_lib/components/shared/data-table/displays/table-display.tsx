@@ -77,53 +77,9 @@ function TableDisplayComponent<TData>({
   );
 }
 
-// Memoize with custom comparison that checks actual row data
-export const TableDisplay = React.memo(
-  TableDisplayComponent,
-  (prevProps, nextProps) => {
-    // Compare non-table props
-    if (
-      prevProps.onRowClick !== nextProps.onRowClick ||
-      prevProps.columnCount !== nextProps.columnCount
-    ) {
-      return false;
-    }
-    
-    // Compare actual row and header data
-    const prevRows = prevProps.table.getRowModel().rows;
-    const nextRows = nextProps.table.getRowModel().rows;
-    const prevHeaders = prevProps.table.getHeaderGroups();
-    const nextHeaders = nextProps.table.getHeaderGroups();
-    
-    // Check row count
-    if (prevRows.length !== nextRows.length) return false;
-    
-    // Check header count
-    if (prevHeaders.length !== nextHeaders.length) return false;
-    
-    // Compare row IDs and selection state
-    for (let i = 0; i < prevRows.length; i++) {
-      if (
-        prevRows[i].id !== nextRows[i].id ||
-        prevRows[i].getIsSelected() !== nextRows[i].getIsSelected()
-      ) {
-        return false;
-      }
-    }
-    
-    // Compare header visibility (columns might be hidden/shown)
-    for (let i = 0; i < prevHeaders.length; i++) {
-      const prevHeaderCells = prevHeaders[i].headers;
-      const nextHeaderCells = nextHeaders[i].headers;
-      
-      if (prevHeaderCells.length !== nextHeaderCells.length) return false;
-      
-      for (let j = 0; j < prevHeaderCells.length; j++) {
-        if (prevHeaderCells[j].id !== nextHeaderCells[j].id) return false;
-      }
-    }
-    
-    // No changes detected, skip re-render
-    return true;
-  }
-) as typeof TableDisplayComponent;
+// Not memoized — same reason as DataTableDisplayFactory: the table prop is a
+// mutable TanStack object. Row IDs are also index-based ("0", "1", "2"…) and
+// stay identical across pages, making ID comparison useless for detecting
+// page changes. DataTable's own memo already prevents unnecessary renders at
+// the outer boundary.
+export const TableDisplay = TableDisplayComponent;

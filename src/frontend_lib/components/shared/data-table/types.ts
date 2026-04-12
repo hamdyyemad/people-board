@@ -1,4 +1,5 @@
 import { ColumnDef, Table } from "@tanstack/react-table";
+import type { IPaginationMeta } from "@/frontend_lib/types";
 
 export type ViewMode = "table" | "list" | "grid";
 
@@ -40,6 +41,21 @@ export interface CardConfig<TData> {
   fields?: CardFieldConfig<TData>[];
 }
 
+/**
+ * Passed from the page to the DataTable when using server-side cursor pagination.
+ * The table will render cursor-aware Prev/Next controls instead of the default
+ * client-side page navigator.
+ */
+export interface ServerPaginationProps {
+  meta: IPaginationMeta;
+  onNext: () => void;
+  onPrev: () => void;
+  /** Called when the user changes the "rows per page" selector. */
+  onLimitChange?: (limit: number) => void;
+  /** 1-indexed current page number. When provided alongside meta.totalCount, shows "Page X of Y". */
+  currentPage?: number;
+}
+
 export interface DataTableConfig<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -56,12 +72,23 @@ export interface DataTableConfig<TData> {
   exportFileName?: string;
   /** Template columns for import validation */
   importTemplateColumns?: string[];
-  /** Loading state — shows column-matched skeleton */
+  /** Loading state — shows column-matched skeleton (first fetch only). */
   isLoading?: boolean;
+  /**
+   * Set to `true` while React Query is re-fetching (e.g. navigating pages).
+   * Shows a subtle overlay instead of replacing the table with a skeleton,
+   * so the user keeps seeing the previous page's data while the next loads.
+   */
+  isFetching?: boolean;
   // Card rendering: either pass custom render functions OR card configs
   gridCard?: ((row: TData) => React.ReactNode) | CardConfig<TData>;
   listCard?: ((row: TData) => React.ReactNode) | CardConfig<TData>;
   rowActions?: (row: TData, table: Table<TData>) => React.ReactNode;
   onRowClick?: (row: TData) => void;
   onImport?: (rows: TData[]) => void;
+  /**
+   * When provided, the table switches to server-side cursor pagination.
+   * Client-side row chunking is disabled; Prev/Next cursors drive data fetching.
+   */
+  serverPagination?: ServerPaginationProps;
 }

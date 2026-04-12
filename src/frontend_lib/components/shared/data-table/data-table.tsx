@@ -35,12 +35,14 @@ function DataTableComponent<TData>({
   exportFileName = "export",
   importTemplateColumns,
   isLoading = false,
+  isFetching = false,
   error = null,
   gridCard,
   listCard,
   rowActions,
   onRowClick,
   onImport,
+  serverPagination,
 }: DataTableConfig<TData>) {
   // Build columns with selection and actions
   const columns = useDataTableColumns({
@@ -55,6 +57,7 @@ function DataTableComponent<TData>({
     columns,
     enableRowSelection,
     defaultPageSize,
+    manualPagination: !!serverPagination,
   });
 
   // Memoize callbacks to prevent unnecessary re-renders
@@ -106,84 +109,40 @@ function DataTableComponent<TData>({
         />
       </div>
 
-      {/* Display with toggles positioned absolutely to align with toolbar */}
-      <DataTableDisplayFactory
-        table={table}
-        columnCount={columns.length}
-        onRowClick={onRowClick}
-        listCard={listCard}
-        gridCard={gridCard}
-        hasListView={!!listCard}
-        hasGridView={!!gridCard}
-        enableViewToggle={enableViewToggle}
-      />
+      {/* Display — relative wrapper lets us overlay a spinner during page transitions */}
+      <div className="relative">
+        <DataTableDisplayFactory
+          table={table}
+          columnCount={columns.length}
+          onRowClick={onRowClick}
+          listCard={listCard}
+          gridCard={gridCard}
+          hasListView={!!listCard}
+          hasGridView={!!gridCard}
+          enableViewToggle={enableViewToggle}
+        />
+        {/* Page-transition overlay: shows only when re-fetching, not on first load */}
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/60 backdrop-blur-[1px]">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        )}
+      </div>
       
 
-      <DataTablePagination table={table} />
+      <DataTablePagination
+        table={table}
+        serverPagination={serverPagination}
+        currentLimit={defaultPageSize}
+      />
     </div>
   );
 }
 
-// Memoize the entire DataTable to prevent re-renders from parent
-export const DataTable = React.memo(
-  DataTableComponent,
-  (prevProps, nextProps) => {
-    // Log for debugging
-    if (process.env.NODE_ENV === 'development') {
-      const changes = [];
-      if (prevProps.data !== nextProps.data) changes.push('data');
-      if (prevProps.columns !== nextProps.columns) changes.push('columns');
-      if (prevProps.rowActions !== nextProps.rowActions) changes.push('rowActions');
-      if (prevProps.onRowClick !== nextProps.onRowClick) changes.push('onRowClick');
-      if (prevProps.gridCard !== nextProps.gridCard) changes.push('gridCard');
-      if (prevProps.listCard !== nextProps.listCard) changes.push('listCard');
-      if (prevProps.onImport !== nextProps.onImport) changes.push('onImport');
-      if (prevProps.filterFields !== nextProps.filterFields) changes.push('filterFields');
-      if (changes.length > 0) {
-        console.log('[DataTable] Props changed:', changes);
-      }
-    }
-    
-    // Compare data reference (should be stable from parent)
-    if (prevProps.data !== nextProps.data) return false;
-    
-    // Compare columns reference
-    if (prevProps.columns !== nextProps.columns) return false;
-    
-    // Compare scalar props
-    if (
-      prevProps.isLoading !== nextProps.isLoading ||
-      prevProps.defaultPageSize !== nextProps.defaultPageSize ||
-      prevProps.enableRowSelection !== nextProps.enableRowSelection ||
-      prevProps.enableColumnVisibility !== nextProps.enableColumnVisibility ||
-      prevProps.enableExport !== nextProps.enableExport ||
-      prevProps.enableImport !== nextProps.enableImport ||
-      prevProps.enableViewToggle !== nextProps.enableViewToggle ||
-      prevProps.exportFileName !== nextProps.exportFileName
-    ) {
-      return false;
-    }
-    
-    // Compare callback functions (should be stable from parent memoization)
-    if (
-      prevProps.rowActions !== nextProps.rowActions ||
-      prevProps.gridCard !== nextProps.gridCard ||
-      prevProps.listCard !== nextProps.listCard ||
-      prevProps.onRowClick !== nextProps.onRowClick ||
-      prevProps.onImport !== nextProps.onImport
-    ) {
-      return false;
-    }
-    
-    // Compare arrays by reference (should be memoized from parent)
-    if (
-      prevProps.filterFields !== nextProps.filterFields ||
-      prevProps.importTemplateColumns !== nextProps.importTemplateColumns
-    ) {
-      return false;
-    }
-    
-    // All checks passed - skip re-render
-    return true;
-  }
-) as typeof DataTableComponent;
+// Memoize the DataTable using React's default shallow-equality check.
+// A custom comparator was previously used here but caused stale renders
+// in edge cases (e.g. same row count across pages blocking pagination
+// control updates). Default shallow comparison is safe because all props
+// that should be stable (columns, callbacks, filterFields) are defined
+// as module-level constants or wrapped in useCallback/useMemo by callers.
+export const DataTable = React.memo(DataTableComponent) as typeof DataTableComponent;

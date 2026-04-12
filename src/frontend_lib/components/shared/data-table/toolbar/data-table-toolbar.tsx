@@ -70,51 +70,8 @@ function DataTableToolbarComponent<TData>(props: DataTableToolbarProps<TData>) {
   );
 }
 
-// Memoize with custom comparison that checks actual filter state
-export const DataTableToolbar = React.memo(
-  DataTableToolbarComponent,
-  (prevProps, nextProps) => {
-    // Compare scalar props
-    if (
-      prevProps.globalFilter !== nextProps.globalFilter ||
-      prevProps.onGlobalFilterChange !== nextProps.onGlobalFilterChange ||
-      prevProps.enableColumnVisibility !== nextProps.enableColumnVisibility ||
-      prevProps.enableExport !== nextProps.enableExport ||
-      prevProps.enableImport !== nextProps.enableImport ||
-      prevProps.enableViewToggle !== nextProps.enableViewToggle ||
-      prevProps.exportFileName !== nextProps.exportFileName ||
-      prevProps.filterFields !== nextProps.filterFields ||
-      prevProps.importTemplateColumns !== nextProps.importTemplateColumns ||
-      prevProps.onImport !== nextProps.onImport
-    ) {
-      return false;
-    }
-    
-    // Compare actual filter state from table
-    const prevFilters = prevProps.table.getState().columnFilters;
-    const nextFilters = nextProps.table.getState().columnFilters;
-    
-    if (prevFilters.length !== nextFilters.length) return false;
-    
-    // Compare filter content
-    for (let i = 0; i < prevFilters.length; i++) {
-      if (
-        prevFilters[i].id !== nextFilters[i].id ||
-        prevFilters[i].value !== nextFilters[i].value
-      ) {
-        return false;
-      }
-    }
-    
-    // Compare row selection state for selected count badge
-    const prevSelection = prevProps.table.getState().rowSelection;
-    const nextSelection = nextProps.table.getState().rowSelection;
-    const prevSelectionCount = Object.keys(prevSelection).length;
-    const nextSelectionCount = Object.keys(nextSelection).length;
-    
-    if (prevSelectionCount !== nextSelectionCount) return false;
-    
-    // No changes detected, skip re-render
-    return true;
-  }
-) as typeof DataTableToolbarComponent;
+// Not memoized — table is a mutable TanStack object. Custom comparators that read
+// table.getState() or table.getAllColumns() on prev/next props always see the same
+// already-updated object, so they always return "no change" and block re-renders.
+// This prevents the "X of Y selected" badge and column-visibility menu from updating.
+export const DataTableToolbar = DataTableToolbarComponent;

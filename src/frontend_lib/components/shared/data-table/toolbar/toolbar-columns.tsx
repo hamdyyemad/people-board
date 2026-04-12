@@ -47,28 +47,8 @@ function ToolbarColumnsComponent<TData>({ table }: ToolbarColumnsProps<TData>) {
   );
 }
 
-// Memoize with custom comparison that checks actual column visibility state
-export const ToolbarColumns = React.memo(
-  ToolbarColumnsComponent,
-  (prevProps, nextProps) => {
-    // Get column visibility state from both props
-    const prevColumns = prevProps.table.getAllColumns().filter(col => col.getCanHide());
-    const nextColumns = nextProps.table.getAllColumns().filter(col => col.getCanHide());
-    
-    // Compare column count
-    if (prevColumns.length !== nextColumns.length) return false;
-    
-    // Compare each column's visibility state
-    for (let i = 0; i < prevColumns.length; i++) {
-      if (
-        prevColumns[i].id !== nextColumns[i].id ||
-        prevColumns[i].getIsVisible() !== nextColumns[i].getIsVisible()
-      ) {
-        return false;
-      }
-    }
-    
-    // No changes detected, skip re-render
-    return true;
-  }
-) as typeof ToolbarColumnsComponent;
+// Not memoized — table is a mutable TanStack object. A custom comparator calling
+// prevProps.table.getAllColumns() and nextProps.table.getAllColumns() reads the
+// same already-updated object on both sides, so it always sees equal state and
+// skips re-renders — leaving checkmarks stale after visibility toggles.
+export const ToolbarColumns = ToolbarColumnsComponent;

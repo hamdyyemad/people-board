@@ -1,11 +1,14 @@
-import { 
-  DefaultOptions, 
-  useQuery, 
-  useMutation, 
+import {
+  DefaultOptions,
+  useQuery,
+  useMutation,
   useQueryClient,
   UseQueryOptions,
   QueryKey,
+  keepPreviousData,
 } from "@tanstack/react-query";
+import type { Pagination } from "@/frontend_lib/types";
+import type { ListParams } from "./params";
 
 // Re-export error handling from errors module
 import { ApiError, triggerError } from "../errors/api-errors";
@@ -20,6 +23,8 @@ export {
   setGlobalErrorHandler,
   triggerError,
 } from "../errors/api-errors";
+export type { ListParams } from "./params";
+export { buildListSearchParams } from "./params";
 
 // ─────────────────────────────────────────────────────────────────────────
 // React Query Configuration
@@ -92,6 +97,47 @@ export function useGenericQuery<TData = unknown>(
     retry: smartRetry,
     ...options,
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Generic Paginated Query Hook
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Generic paginated query hook for cursor-based list endpoints.
+ *
+ * Wraps {@link useGenericQuery} with three extra conveniences:
+ * 1. `params` is automatically included in the React Query cache key — changing any param
+ *    triggers a new fetch without manual key management.
+ * 2. `keepPreviousData` is set so the table stays populated while the next page loads.
+ * 3. Returns the raw `Pagination<TData>` shape so callers can destructure `data` and
+ *    `pagination` in one step.
+ *
+ * @typeParam TData   - The item type inside the paginated response (e.g. `Department`).
+ * @typeParam TParams - The params object; must extend {@link ListParams}.
+ *
+ * @param queryKeyPrefix - Stable base key identifying the resource, e.g. `['departments']`.
+ * @param fetchFn        - The API function that accepts params and returns `Pagination<TData>`.
+ * @param params         - Current query params (pagination, sort, filters). Pass a memoised
+ *                         object so the key stays referentially stable between renders.
+ *
+ * @example
+ * export const useDepartments = (params: DepartmentListParams = {}) =>
+ *   usePaginatedQuery(['departments'], fetchDepartments, params);
+ */
+export function usePaginatedQuery<TData, TParams extends ListParams>(
+  queryKeyPrefix: QueryKey,
+  fetchFn: (params: TParams) => Promise<Pagination<TData>>,
+  params: TParams
+) {
+  return useGenericQuery<Pagination<TData>>(
+    [...(queryKeyPrefix as unknown[]), params],
+    () => fetchFn(params),
+    // Keep the previous page visible while the next page loads so the table
+    // never goes blank during navigation. isFetching=true triggers the spinner
+    // overlay; once the new page arrives, data updates normally.
+    { placeholderData: keepPreviousData },
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────

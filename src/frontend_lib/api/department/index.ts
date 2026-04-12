@@ -4,6 +4,7 @@ export { useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from '.
 
 // types
 export type { Department, DepartmentStats } from './types';
+export type { DepartmentListParams } from './api';
 
 // validation (client-side validation before API calls)
 // These are SEPARATE from backend schemas to avoid coupling

@@ -1,12 +1,13 @@
 import * as React from "react";
-import { 
-  DataViewHeader, 
+import {
+  DataViewHeader,
   DataTable,
   type EntityConfig,
   type CardConfig,
   type DataTableFilterField,
   type CrudModalControls,
   type CrudOperation,
+  type ServerPaginationProps,
 } from "@/frontend_lib/components/shared/data-table";
 import { CrudModalFactory } from "@/frontend_lib/components/shared/data-table/crud-modal";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/frontend_lib/components/ui/dropdown-menu";
@@ -16,6 +17,8 @@ interface DataViewLayoutProps<T> {
   children?: React.ReactNode;
   config: EntityConfig<T>;
   isLoading?: boolean;
+  /** Pass React Query's `isFetching` here — shows a spinner overlay during page transitions. */
+  isFetching?: boolean;
   error?: Error | null;
   // DataTable props
   data: T[];
@@ -37,10 +40,15 @@ interface DataViewLayoutProps<T> {
   // Modal props
   modal?: CrudModalControls<T>;
   modalLoading?: boolean;
+  /**
+   * When provided, cursor-based server pagination controls replace the
+   * default client-side page navigator in the DataTable footer.
+   */
+  serverPagination?: ServerPaginationProps;
 }
 
-function DataViewLayoutComponent<T extends Object>({ 
-  children, 
+function DataViewLayoutComponent<T extends Object>({
+  children,
   config,
   data,
   columns,
@@ -59,9 +67,11 @@ function DataViewLayoutComponent<T extends Object>({
   enableImport = false,
   enableViewToggle = false,
   isLoading = false,
+  isFetching = false,
   error = null,
   modal,
   modalLoading = false,
+  serverPagination,
 }: DataViewLayoutProps<T>) {
   
   // Generic click handlers for modal operations
@@ -115,6 +125,7 @@ function DataViewLayoutComponent<T extends Object>({
       {/* DataTable integration */}
       <DataTable
         isLoading={isLoading}
+        isFetching={isFetching}
         error={error}
         columns={columns}
         data={data}
@@ -132,6 +143,7 @@ function DataViewLayoutComponent<T extends Object>({
         onRowClick={handleRowClick}
         onImport={onImport}
         filterFields={filterFields}
+        serverPagination={serverPagination}
       />
       
       

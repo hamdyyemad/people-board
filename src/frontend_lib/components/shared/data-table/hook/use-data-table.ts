@@ -16,6 +16,11 @@ interface UseDataTableProps<TData> {
   columns: ColumnDef<TData>[];
   enableRowSelection?: boolean;
   defaultPageSize?: number;
+  /**
+   * Set to `true` when the parent controls pagination server-side.
+   * TanStack Table will display all received rows as-is instead of slicing them.
+   */
+  manualPagination?: boolean;
 }
 
 /**
@@ -27,6 +32,7 @@ export function useDataTable<TData>({
   columns,
   enableRowSelection = true,
   defaultPageSize = 20,
+  manualPagination = false,
 }: UseDataTableProps<TData>) {
   // Core Table State
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -46,6 +52,10 @@ export function useDataTable<TData>({
       rowSelection,
       globalFilter,
     },
+    // When server pagination is active, tell TanStack not to slice the data.
+    // pageCount: -1 means "unknown" — our cursor controls decide next/prev.
+    manualPagination,
+    ...(manualPagination ? { pageCount: -1 } : {}),
     enableRowSelection,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
