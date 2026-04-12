@@ -166,3 +166,29 @@ These scripts handle:
 - Migration file discovery and ordering
 - Transaction management
 - Error handling and logging
+
+## Next Steps: Database Seeding
+
+After running migrations to create your database schema, you'll typically want to seed the database with initial data.
+
+**See:** [Database Seeding Setup Guide](../seed/README.md)
+
+The seeding system works alongside migrations:
+1. **Migrations** create the database structure (tables, indexes, etc.)
+2. **Seeds** populate those tables with initial data (departments, countries, etc.)
+
+### Quick Start
+
+```bash
+# Run migrations first (creates schema)
+pnpm run db  # Select [1] Run Migrations
+
+# Then run seeds (populates data)
+pnpm run db  # Select [2] Run Seeds
+```
+
+Or run directly:
+```bash
+pnpm run migrate  # Create schema
+pnpm run seed     # Populate data
+```
