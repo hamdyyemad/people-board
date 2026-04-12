@@ -45,49 +45,91 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
   }
 
   /**
-   * Calls super.findAll(params) to get the base query (not awaited),
-   * then chains .leftJoin() for parent name, and awaits.
+   * Builds the query directly (no $dynamic() chaining) so that domain-specific
+   * filter conditions are ANDed into the same WHERE clause as the soft-delete
+   * guard and cursor condition — not replacing them.
+   *
+   * The LEFT JOIN for parent name must be part of the same SELECT so that ORDER BY
+   * (when sortBy=parentName) and cursor WHERE can reference parent.name.
    */
   async findAll(params?: ListingQueryInput, isAudit: boolean = false): Promise<DepartmentWithParentName[]> {
-    // To remove extra unused columns from the join, we can specify a projection of only the needed fields.
     const projection = {
       id: departmentsTable.id,
       name: departmentsTable.name,
       parentId: departmentsTable.parentId,
-      parentName: this.parentAlias.name, // Alias for joined parent name
+      parentName: this.parentAlias.name,
       createdAt: departmentsTable.createdAt,
       updatedAt: departmentsTable.updatedAt,
       deletedAt: departmentsTable.deletedAt,
-    }
-    
-    // super.findAll returns a $dynamic() query builder — not awaited
-    const query = super.findAll(params, isAudit, projection);
+    };
 
-    // Push domain-specific filters when paginated
-    if (params?.filters) {
-      const extraConditions = [];
+    if (!params) {
+      // No pagination — return all non-deleted rows.
+      const result = await DrizzleClient
+        .select(projection)
+        .from(departmentsTable)
+        .leftJoin(this.parentAlias, eq(departmentsTable.parentId, this.parentAlias.id))
+        .where(isAudit ? undefined : isNull(departmentsTable.deletedAt));
+      return result.map((row: any) => this.toDomainWithParent(row));
+    }
+
+    // buildListQuery sets _lastSortFields and returns the WHERE / ORDER BY / LIMIT
+    // conditions (including soft-delete guard + cursor WHERE).
+    const { where, orderBy, limit } = this.buildListQuery(params, isAudit);
+
+    // Append domain-specific filter conditions into the same WHERE array so they
+    // are ANDed with the soft-delete guard and cursor condition — not replacing them.
+    if (params.filters) {
       for (const f of params.filters) {
         if (f.field === 'parentId' && f.op === 'eq' && typeof f.value === 'string') {
-          extraConditions.push(eq(departmentsTable.parentId, f.value));
+          where.push(eq(departmentsTable.parentId, f.value));
         }
         if (f.field === 'name' && f.op === 'contains' && typeof f.value === 'string' && f.value.length > 0) {
-          extraConditions.push(ilike(departmentsTable.name, `%${f.value}%`));
+          where.push(ilike(departmentsTable.name, `%${f.value}%`));
         }
-      }
-      if (extraConditions.length > 0) {
-        query.where(and(...extraConditions));
       }
     }
 
-    // Chain the join and await
-    const result = await query.leftJoin(this.parentAlias, eq(departmentsTable.parentId, this.parentAlias.id));
+    const result = await DrizzleClient
+      .select(projection)
+      .from(departmentsTable)
+      .leftJoin(this.parentAlias, eq(departmentsTable.parentId, this.parentAlias.id))
+      .where(where.length > 0 ? and(...where) : undefined)
+      .orderBy(...orderBy)
+      .limit(limit);
 
     return result.map((row: any) => this.toDomainWithParent(row));
   }
 
   /**
+   * COUNT(*) of non-deleted departments matching the same filters as findAll.
+   * Does not apply cursor / limit / sort — returns the full matching record count.
+   */
+  async countAll(params?: ListingQueryInput): Promise<number> {
+    const conditions = [isNull(departmentsTable.deletedAt)];
+
+    if (params?.filters) {
+      for (const f of params.filters) {
+        if (f.field === 'parentId' && f.op === 'eq' && typeof f.value === 'string') {
+          conditions.push(eq(departmentsTable.parentId, f.value));
+        }
+        if (f.field === 'name' && f.op === 'contains' && typeof f.value === 'string' && f.value.length > 0) {
+          conditions.push(ilike(departmentsTable.name, `%${f.value}%`));
+        }
+      }
+    }
+
+    const result = await DrizzleClient
+      .select({ total: count() })
+      .from(departmentsTable)
+      .where(and(...conditions));
+
+    return result[0]?.total ?? 0;
+  }
+
+  /**
    * Get department statistics
-   * 
+   *
    * @returns DepartmentStatsDTO with counts of total, top-level, and sub-departments
    */
   async getStats(): Promise<DepartmentStatsDTO> {

@@ -193,7 +193,7 @@ shared/listing/
 |---|---|---|
 | `PaginationCursor` | const object | `encode(values: Record<string, unknown>)` / `decode(cursor): Record<string, unknown>` |
 | `PaginationQueryDTO` | class | Validated pagination input (limit 1–100); has `getCursorData()` |
-| `PaginationHelper` | class | `processPaginatedResults(rows, limit, sortFields, requestCursor?, extractValue?)` |
+| `PaginationHelper` | class | `processPaginatedResults(rows, limit, sortFields, requestCursor?, extractValue?, direction?)` |
 | `PaginatedResponse<T>` | interface | `{ data: T[], pagination: IPaginationMeta }` — standard API shape |
 | `ListingQuery<F>` | class | Fluent builder for controllers |
 | `ListingQueryInput<F>` | interface | Plain object produced by the builder, consumed by services |
@@ -241,11 +241,11 @@ async getDepartments(q: DepartmentQuery) {
 
 ---
 
-## Repository Layer: Dynamic Query Composition
+## Repository Layer: Query Composition
 
-### Unawaited Drizzle Builder + `$dynamic()`
+### Base `findAll` — returns a `$dynamic()` builder
 
-`BaseRepository.findAll()` **does not await** the query. It returns a Drizzle query builder:
+`BaseRepository.findAll()` **does not await** the query. It returns a Drizzle `$dynamic()` query builder that simple repositories can `await` directly:
 
 ```typescript
 findAll(params?: ListingQueryInput, isAudit = false): any {
@@ -259,16 +259,55 @@ findAll(params?: ListingQueryInput, isAudit = false): any {
 }
 ```
 
-Child repositories chain domain-specific logic before awaiting:
+For simple repositories (no joins, no extra filters), just `await super.findAll(params)`.
+
+### Child Repositories with Joins — call `buildListQuery` directly
+
+**Do not** chain `.where(extraConditions)` on the `$dynamic()` query — in Drizzle, chaining `.where()` *replaces* the existing WHERE clause, losing the soft-delete guard and cursor condition.
+
+Instead, call `this.buildListQuery(params, isAudit)` directly to get the `where[]` array, then push extra conditions into it before building the query:
 
 ```typescript
 async findAll(params?, isAudit = false): Promise<DepartmentWithParentName[]> {
-  const query = super.findAll(params, isAudit);
-  // ...extra filters...
-  const result = await query.leftJoin(this.parentAlias, eq(departmentsTable.parentId, this.parentAlias.id));
-  return result.map((row: any) => this.toDomainWithParent(row));
+  if (!params) {
+    // No pagination — simple query with join
+    return DrizzleClient
+      .select(projection)
+      .from(departmentsTable)
+      .leftJoin(parentAlias, eq(departmentsTable.parentId, parentAlias.id))
+      .where(isAudit ? undefined : isNull(departmentsTable.deletedAt))
+      .then(result => result.map(toDomainWithParent));
+  }
+
+  // buildListQuery sets _lastSortFields and returns WHERE / ORDER BY / LIMIT
+  const { where, orderBy, limit } = this.buildListQuery(params, isAudit);
+
+  // Append domain-specific filters — they're ANDed into the same WHERE array
+  // (soft-delete guard + cursor condition are already in `where` from buildListQuery)
+  if (params.filters) {
+    for (const f of params.filters) {
+      if (f.field === 'parentId' && f.op === 'eq' && typeof f.value === 'string') {
+        where.push(eq(departmentsTable.parentId, f.value));
+      }
+    }
+  }
+
+  // Build the full query — JOIN must be present so ORDER BY / WHERE can reference parent columns
+  const result = await DrizzleClient
+    .select(projection)
+    .from(departmentsTable)
+    .leftJoin(parentAlias, eq(departmentsTable.parentId, parentAlias.id))
+    .where(where.length > 0 ? and(...where) : undefined)
+    .orderBy(...orderBy)
+    .limit(limit);
+
+  return result.map(toDomainWithParent);
 }
 ```
+
+This pattern ensures:
+- All WHERE conditions (soft-delete + cursor + domain filters) are ANDed together in one `.where()` call.
+- The LEFT JOIN is declared before WHERE/ORDER BY so the query can reference joined columns (`parent.name`) in both clauses.
 
 ### `resolveColumn` Hook
 
@@ -348,9 +387,14 @@ private toDomainWithParent(row: any): DepartmentWithParentName {
 
 ## Use Case: Cursor Encoding with Value Objects
 
-Domain entities may wrap fields in value objects (e.g. `DepartmentName`). The `processPaginatedResults` function accepts an optional `extractValue` callback to unwrap them:
+Domain entities may wrap fields in value objects (e.g. `DepartmentName`). The `processPaginatedResults` function accepts an optional `extractValue` callback to unwrap them. The `direction` parameter (6th argument) must be passed so backward pages are correctly reversed:
 
 ```typescript
+// Resolve direction from cursor first — cursor-embedded _dir is authoritative.
+const effectiveDirection = params.pagination.cursor
+  ? PaginationCursor.decode(params.pagination.cursor).direction
+  : (params.pagination.direction ?? 'forward');
+
 const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPaginatedResults(
   rows,
   params.pagination.limit,
@@ -359,7 +403,8 @@ const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPagin
   (row, field) => {
     if (field === 'name') return row.name.value;  // unwrap DepartmentName VO
     return (row as Record<string, any>)[field];
-  }
+  },
+  effectiveDirection,  // ← required for backward pagination reversal
 );
 ```
 
@@ -367,11 +412,81 @@ const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPagin
 
 ## The "Limit + 1" Trick
 
-Instead of a separate `COUNT(*)`, the repository fetches **one extra row**. If it comes back, `hasMore` is `true`. `processPaginatedResults` trims it before building the response.
+The repository fetches **one extra row**. If it comes back, `hasMore` is `true`. `processPaginatedResults` trims it before building the response.
+
+### Total Count (parallel COUNT(*))
+
+In addition to the limit+1 trick, the use case runs a parallel `countAll()` query to return `totalCount` — the number of records matching current filters, ignoring pagination:
+
+```typescript
+// get-departments.ts
+const [rows, totalCount] = await Promise.all([
+  this.departmentRepository.findAll(params),
+  this.departmentRepository.countAll(params),
+]);
+```
+
+`countAll` applies the same soft-delete guard and filter conditions as `findAll` but omits cursor, sort, and limit. This lets the frontend show "Page X of Y (Z total)" without a separate API call.
 
 ### `prevCursor` Semantics
 
 `prevCursor` is only emitted when the client sent a `cursor` parameter — meaning they navigated past page 1. On the very first page (no cursor), `prevCursor` is omitted since there is nothing to go back to.
+
+---
+
+## Backward Pagination
+
+### Algorithm
+
+Backward pagination requires three coordinated steps:
+
+1. **Flip all sort directions** — reverse every column in `ORDER BY` so `LIMIT` picks the N rows *closest* to the cursor from the other side.
+2. **Use `>` instead of `<`** in the row-value WHERE comparison.
+3. **Reverse the result in application code** — restore the original display order before computing cursors and returning to the caller.
+
+`processPaginatedResults` accepts a `direction` parameter to apply step 3:
+
+```typescript
+PaginationHelper.processPaginatedResults(
+  rows, limit, sortFields, requestCursor, extractValue,
+  effectiveDirection,  // 'forward' | 'backward'
+);
+```
+
+### Cursor-Embedded Direction
+
+The frontend may not reliably send `direction=backward` (the Zod schema defaults `direction` to `'forward'`, so "not sent" and "sent as forward" are indistinguishable). The solution: `prevCursor` **embeds `_dir:'backward'`** in its payload:
+
+```
+prevCursor = PaginationCursor.encode(cursorValues, 'backward')
+  → base64({ ...values, _dir: 'backward' })
+```
+
+On decode, the repository reads the embedded direction:
+
+```typescript
+// base-repository.ts — buildListQuery
+if (params.pagination.cursor) {
+  preDecodedCursor = PaginationCursor.decode(params.pagination.cursor);
+  direction = preDecodedCursor.direction;  // cursor-embedded _dir wins
+}
+```
+
+The same logic applies in the use case when calling `processPaginatedResults`. When a cursor is present its embedded direction is authoritative; the explicit `direction=` query param is only used on the first page (no cursor).
+
+### Cursor Invariants
+
+| Guarantee | Where enforced |
+|---|---|
+| `nextCursor` is present on any forward page with more rows | `processPaginatedResults` |
+| `nextCursor` is always present on a backward page (so the user can navigate forward again) | `processPaginatedResults` |
+| `prevCursor` has `_dir:'backward'` embedded — no `direction` query param required | `PaginationCursor.encode` |
+| `prevCursor` is absent on page 1 (initial load, no cursor sent) | `processPaginatedResults` |
+| `prevCursor` is absent on a backward page where `hasMore=false` (no further backward pages) | `processPaginatedResults` |
+
+### Important Note on Data Consistency
+
+Cursor pagination does **not** provide snapshot isolation. If records are inserted or deleted between a forward and backward navigation, the backward page may return different items than the original forward page. This is expected behavior — the cursor anchors to a specific row's sort values, not to a snapshot of the dataset.
 
 ---
 
@@ -384,7 +499,8 @@ Instead of a separate `COUNT(*)`, the repository fetches **one extra row**. If i
     "hasMore": true,
     "nextCursor": "eyJuYW1lIjoiRGVwYXJ0bWVudCAxNTYxMiIsImNyZWF0ZWRBdCI6...",
     "prevCursor": "eyJuYW1lIjoiQnJhbmQiLCJjcmVhdGVkQXQiOjE3NzQxNzY3ODA4...",
-    "count": 20
+    "count": 20,
+    "totalCount": 98
   }
 }
 ```
@@ -394,8 +510,9 @@ Instead of a separate `COUNT(*)`, the repository fetches **one extra row**. If i
 | `data` | The page of items (up to `limit`) |
 | `pagination.hasMore` | `true` if there is a next page |
 | `pagination.nextCursor` | Pass as `?cursor=` on the next request |
-| `pagination.prevCursor` | Cursor for the first item of the current page (omitted on page 1) |
+| `pagination.prevCursor` | Cursor for the first item of the current page (omitted on page 1); has `_dir:'backward'` embedded |
 | `pagination.count` | Number of items in `data` for this response |
+| `pagination.totalCount` | Total records matching current filters (ignoring pagination). Used by the frontend for "Page X of Y (Z total)". |
 
 ---
 
@@ -439,7 +556,7 @@ GET /api/v1/departments?limit=20&sortBy=name&sortOrder=asc&parentId=359da22f-...
 
 3. **Use Case** — Accept `ListingQueryInput`. Call `repository.findAll(params)`. Read `repo.lastSortFields`. Pass both to `PaginationHelper.processPaginatedResults` with an `extractValue` callback if the entity uses value objects. Return `PaginatedResponse<ViewModel>`.
 
-4. **Repository** — If no joins are needed, `await super.findAll(params)` works directly. If joins are needed, call `super.findAll(params)` (unawaited), chain `.leftJoin()`, then `await`. Override `resolveColumn` for any joined/computed sort fields. Handle domain-specific filters from `params.filters` before awaiting.
+4. **Repository** — If no joins are needed, `await super.findAll(params)` works directly. If joins or extra filters are needed, call `this.buildListQuery(params, isAudit)` directly to get the `{ where, orderBy, limit }` pieces, push domain filter conditions into the `where[]` array, then build the full Drizzle query (including JOIN) in one go. Implement `countAll(params?)` applying the same soft-delete guard and domain filters (no cursor/sort/limit). Override `resolveColumn` for any joined/computed sort fields. Add `countAll` to the repository interface.
 
 5. **Route** — Validate query params with Zod, pass to service, return the `PaginatedResponse`.
 

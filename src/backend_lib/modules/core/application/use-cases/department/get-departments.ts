@@ -10,16 +10,19 @@ export class GetDepartmentsUseCase {
    * Then trim limit+1 → items + pagination meta.
    */
   async execute(params: ListingQueryInput): Promise<PaginatedResponse<DepartmentResponseViewModel>> {
-    const rows = await this.departmentRepository.findAll(params);
+    const [rows, totalCount] = await Promise.all([
+      this.departmentRepository.findAll(params),
+      this.departmentRepository.countAll(params),
+    ]);
+
     const sortFields = this.departmentRepository.lastSortFields;
 
-    // Resolve the actual direction used — cursor-embedded direction is the authoritative
-    // source when no explicit direction param was sent (same logic as base-repository).
-    const effectiveDirection =
-      params.pagination.direction ??
-      (params.pagination.cursor
-        ? PaginationCursor.decode(params.pagination.cursor).direction
-        : 'forward');
+    // Resolve the actual direction — mirrors base-repository logic.
+    // When a cursor is present its embedded _dir is authoritative (Zod schema defaults
+    // direction to 'forward' so we cannot distinguish "not sent" from "explicitly forward").
+    const effectiveDirection = params.pagination.cursor
+      ? PaginationCursor.decode(params.pagination.cursor).direction
+      : (params.pagination.direction ?? 'forward');
 
     const { items, hasMore, nextCursor, prevCursor } = PaginationHelper.processPaginatedResults(
       rows,
@@ -48,7 +51,7 @@ export class GetDepartmentsUseCase {
 
     return {
       data,
-      pagination: { hasMore, nextCursor, prevCursor, count: data.length },
+      pagination: { hasMore, nextCursor, prevCursor, count: data.length, totalCount },
     };
   }
 }

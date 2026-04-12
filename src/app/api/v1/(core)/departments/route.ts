@@ -18,7 +18,7 @@ import { validateRequestQueryParams } from '@/backend_lib/shared/validation/vali
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
 
-export const GET = withMiddlewares(getDepartment);
+export const GET = withMiddlewares(getDepartments);
 export const POST = withMiddlewares(createDepartment);
 
 async function createDepartment(request: NextRequest) {
@@ -34,18 +34,18 @@ async function createDepartment(request: NextRequest) {
   return createSuccessResponse(request, department, 201);
 }
 
-async function getDepartment(request: NextRequest) {
+async function getDepartments(request: NextRequest) {
   // Validate query parameters
   const queryResult = validateRequestQueryParams(request, departmentQuerySchema);   
   if ('errorResponse' in queryResult) return queryResult.errorResponse;
 
   // Get all departments
-  const department = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
+  const departments = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
   
 
    return createSuccessResponse(
     request,
-    department,
+    departments,
     200
   );
 }

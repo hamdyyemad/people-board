@@ -186,18 +186,17 @@ export abstract class BaseRepository<T extends { id: string }> {
     }
 
     // -- Resolve the authoritative direction --------------------------------
-    // Priority: explicit query-param > direction embedded in the cursor > default forward.
-    // We decode the cursor here (if present) purely to read its embedded _dir;
-    // the actual cursor values are decoded again below for the WHERE clause.
-    let direction: 'forward' | 'backward' = params.pagination.direction ?? 'forward';
+    // When a cursor is present its embedded _dir is authoritative: the Zod schema
+    // defaults direction to 'forward', so params.pagination.direction is never
+    // undefined and we cannot distinguish "not sent" from "explicitly sent as forward".
+    // Cursor direction always wins when a cursor is present; explicit param is used
+    // only on the first page (no cursor).
     let preDecodedCursor: ReturnType<typeof PaginationCursor.decode> | null = null;
+    let direction: 'forward' | 'backward' = params.pagination.direction ?? 'forward';
 
     if (params.pagination.cursor) {
       preDecodedCursor = PaginationCursor.decode(params.pagination.cursor);
-      // Cursor-embedded direction wins only when no explicit param was sent.
-      if (!params.pagination.direction) {
-        direction = preDecodedCursor.direction;
-      }
+      direction = preDecodedCursor.direction;
     }
 
     const isBackward = direction === 'backward';
@@ -229,11 +228,13 @@ export abstract class BaseRepository<T extends { id: string }> {
     this._lastSortFields = sortFields;
 
     // -- Compound cursor WHERE clause ---------------------------------------
+    // Hoisted so ORDER BY can reuse the same set to match cursor precision.
+    const timestampFields = new Set(['createdAt', 'updatedAt']);
+
     if (preDecodedCursor) {
       const cursorValues = preDecodedCursor.values;
       const colRefs: SQL[] = [];
       const valRefs: SQL[] = [];
-      const timestampFields = new Set(['createdAt', 'updatedAt']);
 
       for (const s of effectiveSort) {
         const col = this.resolveColumn(s.field);
@@ -257,11 +258,19 @@ export abstract class BaseRepository<T extends { id: string }> {
     }
 
     // -- ORDER BY -----------------------------------------------------------
+    // Timestamp fields are ordered by date_trunc('milliseconds', col) so the
+    // sort precision matches the cursor precision (epoch-ms). Without this,
+    // items whose sub-millisecond timestamps differ within the same millisecond
+    // return in a different order than the cursor WHERE clause expects, causing
+    // backward/forward navigation to show wrong items.
     const orderBy: SQL[] = [];
     for (const s of effectiveSort) {
       const col = this.resolveColumn(s.field);
       if (!col) continue;
-      orderBy.push(s.direction === 'asc' ? asc(col) : desc(col));
+      const expr = timestampFields.has(s.field)
+        ? sql`date_trunc('milliseconds', ${col})`
+        : sql`${col}`;
+      orderBy.push(s.direction === 'asc' ? asc(expr) : desc(expr));
     }
 
     const limit = params.pagination.limit + 1;

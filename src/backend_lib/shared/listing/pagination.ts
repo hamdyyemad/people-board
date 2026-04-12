@@ -37,6 +37,8 @@ export interface IPaginationMeta {
   prevCursor?: string | undefined;
   /** Row count in `data` for this response (after removing the extra probe row). */
   count: number;
+  /** Total number of records matching the current filters (ignoring pagination). */
+  totalCount?: number | undefined;
 }
 
 /**
