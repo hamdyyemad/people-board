@@ -44,7 +44,9 @@
     "start": "next start",
     "lint": "eslint",
     "prepare": "husky",
-    "migrate": "node scripts/database/run-migrations.js"
+    "db": "node scripts/database/index.js",
+    "migrate": "node scripts/database/migration/run-migrations.js",
+    "seed": "node scripts/database/seed/run-seed.js"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
