@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -11,7 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -19,16 +23,41 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/backend_lib/exceptions": ["./src/backend_lib/shared/exceptions"],
-      "@/backend_lib/exceptions/*": ["./src/backend_lib/shared/exceptions/*"],
-      "@/backend_lib/types/*": ["./src/backend_lib/shared/http/types/*"],
-      "@/backend_lib/http/*": ["./src/backend_lib/shared/http/*"],
-      "@/backend_lib/middlewares": ["./src/backend_lib/shared/middlewares"],
-      "@/backend_lib/middlewares/*": ["./src/backend_lib/shared/middlewares/*"],
-      "@/backend_lib/utils/*": ["./src/backend_lib/shared/utils/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/backend_lib/exceptions": [
+        "./src/backend_lib/shared/exceptions"
+      ],
+      "@/backend_lib/exceptions/*": [
+        "./src/backend_lib/shared/exceptions/*"
+      ],
+      "@/backend_lib/types/*": [
+        "./src/backend_lib/shared/http/types/*"
+      ],
+      "@/backend_lib/http/*": [
+        "./src/backend_lib/shared/http/*"
+      ],
+      "@/backend_lib/middlewares": [
+        "./src/backend_lib/shared/middlewares"
+      ],
+      "@/backend_lib/middlewares/*": [
+        "./src/backend_lib/shared/middlewares/*"
+      ],
+      "@/backend_lib/utils/*": [
+        "./src/backend_lib/shared/utils/*"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "scripts/database/run-migrations.js"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "scripts/database/run-migrations.js",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
