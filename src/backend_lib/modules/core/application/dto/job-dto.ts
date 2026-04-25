@@ -1,4 +1,4 @@
-// src/backend_lib/modules/core/application/dto/job.dto.ts
+// ################# DTOs #################
 export class CreateJobDTO {
   constructor(
     public title: string,
@@ -14,13 +14,31 @@ export class UpdateJobDTO {
   ) {}
 }
 
-export class JobResponseDTO {
+export class JobStatsDTO {
+  constructor(
+    public totalJobs: number,
+    public activeJobs: number,
+    public inactiveJobs: number
+  ) {}
+}
+
+// ############# View Models #############
+export class JobResponseViewModel {
   constructor(
     public id: string,
     public title: string,
     public departmentId: string,
+    public departmentName: string | undefined,
     public createdAt: Date,
     public updatedAt: Date,
     public isActive: boolean
+  ) {}
+}
+
+export class JobStatsViewModel {
+  constructor(
+    public totalJobs: number,
+    public activeJobs: number,
+    public inactiveJobs: number
   ) {}
 }

@@ -15,7 +15,7 @@ export class CheckParentIdUseCase {
         const exist = await this.departmentRepository.existsById(id);
 
         if (!exist) {
-            throw new DepartmentNotFoundError(`Department with ID ${id} does not exist.`);
+            throw new DepartmentNotFoundError(id);
         }
 
         return exist;

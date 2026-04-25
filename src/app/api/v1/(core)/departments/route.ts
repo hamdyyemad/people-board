@@ -18,9 +18,31 @@ import { validateRequestQueryParams } from '@/backend_lib/shared/validation/vali
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
 
-export const GET = withMiddlewares(getDepartments);
-export const POST = withMiddlewares(createDepartment);
 
+// ========================================================
+// GET /api/v1/departments - List departments with optional filters and pagination
+// ========================================================
+export const GET = withMiddlewares(getDepartments);
+async function getDepartments(request: NextRequest) {
+  // Validate query parameters
+  const queryResult = validateRequestQueryParams(request, departmentQuerySchema);   
+  if ('errorResponse' in queryResult) return queryResult.errorResponse;
+  
+  // Get all departments
+  const departments = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
+  
+  
+  return createSuccessResponse(
+    request,
+    departments,
+    200
+  );
+}
+
+// ========================================================
+// POST /api/v1/departments - Create a new department
+// ========================================================
+export const POST = withMiddlewares(createDepartment);
 async function createDepartment(request: NextRequest) {
   const result = await validateRequestBody(request, createDepartmentBodySchema);
   if ('errorResponse' in result) return result.errorResponse;
@@ -32,20 +54,4 @@ async function createDepartment(request: NextRequest) {
   });
 
   return createSuccessResponse(request, department, 201);
-}
-
-async function getDepartments(request: NextRequest) {
-  // Validate query parameters
-  const queryResult = validateRequestQueryParams(request, departmentQuerySchema);   
-  if ('errorResponse' in queryResult) return queryResult.errorResponse;
-
-  // Get all departments
-  const departments = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
-  
-
-   return createSuccessResponse(
-    request,
-    departments,
-    200
-  );
 }

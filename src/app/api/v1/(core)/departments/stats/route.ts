@@ -10,9 +10,10 @@ import { departmentService } from '@/backend_lib/modules/core/composition-root';
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
 
+// ========================================================
+// GET /api/v1/departments/stats - Get department statistics
+// ========================================================
 export const GET = withMiddlewares(getDepartmentStats);
-
-
 async function getDepartmentStats(request: NextRequest) {
   const stats = await departmentService.getDepartmentsStats();
 

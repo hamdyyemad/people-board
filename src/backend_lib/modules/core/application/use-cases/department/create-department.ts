@@ -35,8 +35,8 @@ export class CreateDepartmentUseCase {
       input.parentId || null
     );
 
-    const savedDepartment = await this.departmentRepository.save(department);
     // Save via repository
+    const savedDepartment = await this.departmentRepository.save(department);
     
     const mappedDepartment = new DepartmentResponseViewModel(
         savedDepartment.id, 

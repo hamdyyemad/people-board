@@ -13,10 +13,10 @@ import { departmentIdParamSchema, updateDepartmentBodySchema } from '@/backend_l
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
 
+// ========================================================
+// GET /api/v1/departments/:id - Get a department by ID
+// ========================================================
 export const GET = withMiddlewares(getDepartmentById);
-export const PUT = withMiddlewares(updateDepartment);
-export const DELETE = withMiddlewares(deleteDepartment);
-
 async function getDepartmentById(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -39,6 +39,10 @@ async function getDepartmentById(
   );
 }
 
+// ========================================================
+// PUT /api/v1/departments/:id - Update a department by ID
+// ========================================================
+export const PUT = withMiddlewares(updateDepartment);
 async function updateDepartment(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -72,6 +76,10 @@ async function updateDepartment(
   );
 }
 
+// ========================================================
+// DELETE /api/v1/departments/:id - Delete a department by ID
+// ========================================================
+export const DELETE = withMiddlewares(deleteDepartment);
 async function deleteDepartment(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

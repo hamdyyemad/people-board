@@ -1,5 +1,10 @@
+// Ports
 import type { IDepartmentRepository } from '../../../domain/ports/repositories/department-repository';
+
+// DTOs & ViewModels
 import { DepartmentResponseViewModel } from '../../dto/department-dto';
+
+// Listing
 import { PaginationCursor, PaginationHelper, type ListingQueryInput, type PaginatedResponse } from '@/backend_lib/shared/listing';
 
 export class GetDepartmentsUseCase {

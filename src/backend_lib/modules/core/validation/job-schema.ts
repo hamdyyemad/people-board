@@ -22,6 +22,7 @@ export type CreateJobBody = z.infer<typeof createJobBodySchema>;
 
 // ---- Update ----
 export const updateJobBodySchema = z.object({
+  id: uuidRequired,
   title: titleSchema.optional(),
   departmentId: z
     .union([
