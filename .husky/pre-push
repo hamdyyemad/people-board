@@ -1,2 +1,2 @@
 echo "🚀 Checking build before pushing..."
-pnpm build:fast
+pnpm build
