@@ -7,7 +7,7 @@ import { JobTitle } from "../../../domain/value-objects/job-title";
 import { Job } from "../../../domain/entities/job";
 
 // DTOs
-import { CreateJobDTO, JobResponseViewModel } from "../../dto/job-dto";
+import { CreateJobDTOOutput, JobResponseViewModel } from "../../dto/job-dto";
 
 // Exceptions
 import { DuplicateJobNameError } from "../../../domain/exceptions/job-exceptions";;
@@ -18,7 +18,7 @@ export class CreateJobUseCase {
         private readonly idGenerator: IIdGenerator
     ){}
 
-    async execute(input: CreateJobDTO): Promise<JobResponseViewModel> {
+    async execute(input: CreateJobDTOOutput): Promise<JobResponseViewModel> {
         // Create value object (this will also validate the title and normalize it)
         const jobTitle = new JobTitle(input.title);       
 
@@ -34,7 +34,7 @@ export class CreateJobUseCase {
             jobTitle,
             input.departmentId
         );
-
+                
         // Save via repository
         const savedJob = await this.jobRepository.save(job);
 

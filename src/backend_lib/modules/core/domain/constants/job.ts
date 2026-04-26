@@ -22,5 +22,6 @@ export const JOB_TITLE_MESSAGES = {
 // ---- Job entity invariants ----
 export const JOB_MESSAGES = {
   ID_EMPTY: 'Job ID cannot be empty',
+  ID_NOT_FOUND: 'Job with the specified ID does not exist',
   DEPARTMENT_ID_EMPTY: 'Job department ID cannot be empty',
 } as const;

@@ -8,9 +8,9 @@ const uuidRequired = z
 
 const titleSchema = z
   .string({ required_error: JOB_TITLE_MESSAGES.REQUIRED })
+  .trim()
   .min(JOB_TITLE.MIN_LENGTH, JOB_TITLE_MESSAGES.EMPTY)
-  .max(JOB_TITLE.MAX_LENGTH, JOB_TITLE_MESSAGES.TOO_LONG)
-  .trim();
+  .max(JOB_TITLE.MAX_LENGTH, JOB_TITLE_MESSAGES.TOO_LONG);
 
 // ---- Create ----
 export const createJobBodySchema = z.object({

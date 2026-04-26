@@ -23,5 +23,6 @@ export {
   UnauthorizedError,
   ForbiddenError,
   InternalServerError,
+  EntityIdError,
   type ErrorResponse,
 } from './types';

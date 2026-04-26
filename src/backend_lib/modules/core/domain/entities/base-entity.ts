@@ -10,6 +10,14 @@
  * Generic Type: E extends DomainEvent (for type-safe event management)
  */
 
+import { isUuid } from '@/backend_lib/shared/validation';
+import { EntityIdError } from '@/backend_lib/shared/exceptions';
+
+const ENTITY_ID_MESSAGES = {
+  EMPTY: 'Id cannot be empty',
+  INVALID_UUID: 'Id must be a valid UUID',
+} as const;
+
 export abstract class BaseEntity<E = any> {
   protected domainEvents: E[] = [];
 
@@ -19,6 +27,14 @@ export abstract class BaseEntity<E = any> {
     public updatedAt: Date = new Date(),
     public deletedAt: Date | null = null
   ) {
+    // We have moved validation to a separate init() method that subclasses must call at the end of their constructor.
+    // this.validate();
+    // this.validateEntityId();
+  }
+
+  /** Call once at end of subclass constructor. */
+  protected init(): void {
+    this.validateEntityId();
     this.validate();
   }
 
@@ -30,6 +46,19 @@ export abstract class BaseEntity<E = any> {
    * protected = base class + subclasses can use it (allows overriding the abstract method)
    */
   protected abstract validate(): void;
+
+  /**
+   * Validates the aggregate root `id`: non-empty and UUID-shaped (matches DB uuid columns).
+   * Concrete implementation shared by all entities; subclasses do not override this.
+   */
+  protected validateEntityId(): void {
+    if (this.id == null || typeof this.id !== 'string' || this.id.trim() === '') {
+      throw new EntityIdError(ENTITY_ID_MESSAGES.EMPTY);
+    }
+    if (!isUuid(this.id.trim())) {
+      throw new EntityIdError(ENTITY_ID_MESSAGES.INVALID_UUID);
+    }
+  }
 
   /**
    * Check if entity is logically active (not soft-deleted)

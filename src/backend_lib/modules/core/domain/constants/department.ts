@@ -22,5 +22,6 @@ export const DEPARTMENT_NAME_MESSAGES = {
 // ---- Department entity invariants ----
 export const DEPARTMENT_MESSAGES = {
   ID_EMPTY: 'Department ID cannot be empty',
+  ID_NOT_FOUND: 'Department with the specified ID does not exist',
   OWN_PARENT: 'Department cannot be its own parent',
 } as const;

@@ -1,16 +1,51 @@
+import { isUuid } from '@/backend_lib/shared/validation';
+import { ValidationError, EntityIdError } from '@/backend_lib/shared/exceptions';
+
 // ################# DTOs #################
-export class CreateJobDTO {
+export class CreateJobDTOInput {
+  constructor(
+    public readonly title: string,
+    public readonly departmentId: string
+  ) {
+    if (!title || title.trim() === '') {
+      throw new ValidationError('title cannot be empty');
+    }
+    if (!isUuid(departmentId)) {
+      throw new EntityIdError('departmentId must be a valid UUID');
+    }
+  }
+}
+
+export class CreateJobDTOOutput {
   constructor(
     public title: string,
     public departmentId: string
   ) {}
 }
 
-export class UpdateJobDTO {
+export class UpdateJobDTOInput {
+  constructor(
+    public readonly id: string,
+    public readonly title: string,
+    public readonly departmentId: string,
+  ) {
+    if(!isUuid(id)) {
+      throw new EntityIdError('id must be a valid UUID');
+    }
+    if (!title || title.trim() === '') {
+      throw new ValidationError('title cannot be empty');
+    }
+    if (!isUuid(departmentId)) {
+      throw new EntityIdError('departmentId must be a valid UUID');
+    }
+  }
+}
+
+export class UpdateJobDTOOutput {
   constructor(
     public id: string,
-    public departmentId?: string,
     public title?: string,
+    public departmentId?: string,
   ) {}
 }
 

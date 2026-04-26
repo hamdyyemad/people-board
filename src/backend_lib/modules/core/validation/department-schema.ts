@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../domain/constants/department';
-import { basePaginationQuerySchema } from '@/backend_lib/shared/validation/pagination-schema';
+import { basePaginationQuerySchema } from '@/backend_lib/shared/validation';
 
 // ---- Shared ----
 const uuidOptional = z
@@ -13,9 +13,9 @@ const uuidOptional = z
 
 const nameSchema = z
   .string({ required_error: DEPARTMENT_NAME_MESSAGES.REQUIRED })
+  .trim()
   .min(DEPARTMENT_NAME.MIN_LENGTH, DEPARTMENT_NAME_MESSAGES.EMPTY)
-  .max(DEPARTMENT_NAME.MAX_LENGTH, DEPARTMENT_NAME_MESSAGES.TOO_LONG)
-  .trim();
+  .max(DEPARTMENT_NAME.MAX_LENGTH, DEPARTMENT_NAME_MESSAGES.TOO_LONG);
 
 const ALLOWED_DEPT_SORT_FIELDS = ['createdAt', 'name', 'updatedAt', 'parentName'] as const;
 

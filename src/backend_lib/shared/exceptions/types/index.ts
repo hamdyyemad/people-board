@@ -10,4 +10,5 @@ export { NotFoundError } from './not-found-error';
 export { UnauthorizedError } from './unauthorized-error';
 export { ForbiddenError } from './forbidden-error';
 export { InternalServerError } from './internal-server-error';
+export { EntityIdError } from './entity-id-error';
 

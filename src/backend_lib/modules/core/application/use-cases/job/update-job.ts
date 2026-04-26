@@ -5,7 +5,7 @@ import { IJobRepository } from "../../../domain/ports/repositories/job-repositor
 import { JobTitle } from "../../../domain/value-objects/job-title";
 
 // DTOs
-import { UpdateJobDTO, JobResponseViewModel } from "../../dto/job-dto";
+import { UpdateJobDTOOutput, JobResponseViewModel } from "../../dto/job-dto";
 
 // Exceptions
 import { JobNotFoundError, DuplicateJobNameError } from "../../../domain/exceptions/job-exceptions";
@@ -15,7 +15,7 @@ export class UpdateJobUseCase {
         private readonly jobRepository: IJobRepository
     ) {}
 
-    async execute(input: UpdateJobDTO): Promise<JobResponseViewModel> {
+    async execute(input: UpdateJobDTOOutput): Promise<JobResponseViewModel> {
         // Fetch existing job
         const existingJob = await this.jobRepository.findById(input.id);
         if (!existingJob) {
