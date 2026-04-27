@@ -31,7 +31,6 @@ async function getDepartments(request: NextRequest) {
   // Get all departments
   const departments = await departmentService.getDepartments(queryResult.data as DepartmentQuery);
   
-  
   return createSuccessResponse(
     request,
     departments,
@@ -48,6 +47,7 @@ async function createDepartment(request: NextRequest) {
   if ('errorResponse' in result) return result.errorResponse;
   
   const { name, parentId } = result.data;
+  
   const department = await departmentService.createDepartment({
     name,
     parentId: parentId ?? null,

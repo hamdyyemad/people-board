@@ -7,7 +7,7 @@ import { DepartmentName } from '../../../domain/value-objects/department-name';
 import { Department } from '../../../domain/entities/department';
 
 // DTOs
-import { CreateDepartmentDTO, DepartmentResponseViewModel } from '../../dto/department-dto';
+import { CreateDepartmentDTOOutput, DepartmentResponseViewModel } from '../../dto/department-dto';
 
 // Exceptions
 import { DuplicateDepartmentNameError } from '../../../domain/exceptions/department-exceptions';
@@ -18,7 +18,7 @@ export class CreateDepartmentUseCase {
     private idGenerator: IIdGenerator
   ) {}
 
-  async execute(input: CreateDepartmentDTO): Promise<DepartmentResponseViewModel> {
+  async execute(input: CreateDepartmentDTOOutput): Promise<DepartmentResponseViewModel> {
     // Create value object (this will also validate the name and normalize it)
     const departmentName = new DepartmentName(input.name);
 

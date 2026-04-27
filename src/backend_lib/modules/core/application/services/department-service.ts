@@ -8,7 +8,7 @@ import { CreateDepartmentUseCase } from '../use-cases/department/create-departme
 import { UpdateDepartmentUseCase } from '../use-cases/department/update-department';
 import { DeleteDepartmentUseCase } from '../use-cases/department/delete-department';
 
-import { CreateDepartmentDTO, UpdateDepartmentDTO } from '../dto/department-dto';
+import { CreateDepartmentDTOInput, CreateDepartmentDTOOutput, DepartmentByIdDTO, UpdateDepartmentDTOInput, UpdateDepartmentDTOOutput } from '../dto/department-dto';
 import { ListingQuery } from '@/backend_lib/shared/listing';
 
 import { CheckParentIdUseCase } from '../use-cases/department/check-parent-id';
@@ -55,30 +55,44 @@ export class DepartmentService {
   }
 
   async getDepartmentById(id: string) {
+    const DTO = new DepartmentByIdDTO(id);
+
     const useCase = new GetDepartmentByIdUseCase(this.departmentRepository);
-    return useCase.execute(id);
+
+    return useCase.execute(DTO.id);
   }
 
-  async createDepartment(input: { name: string; parentId?: string | null }) {
+  async createDepartment(input: { name: string; parentId: string | null }) {
+    const command = new CreateDepartmentDTOInput(input.name, input.parentId);
+
     const checkParentId = new CheckParentIdUseCase(this.departmentRepository);
-    await checkParentId.execute(input.parentId ?? '');
+    await checkParentId.execute(command.parentId ?? '');
 
     const useCase = new CreateDepartmentUseCase(this.departmentRepository, this.idGenerator);
-    const dto = new CreateDepartmentDTO(input.name, input.parentId ?? undefined);
+    
+    const dto = new CreateDepartmentDTOOutput(command.name, command.parentId ?? undefined);
+    
     return useCase.execute(dto);
   }
 
-  async updateDepartment(input: { id: string; name?: string; parentId?: string | null }) {
+  async updateDepartment(input: { id: string; name?: string; parentId?: string }) {
+    const command = new UpdateDepartmentDTOInput(input.id, input.name, input.parentId);
+    
     const checkParentId = new CheckParentIdUseCase(this.departmentRepository);
     await checkParentId.execute(input.parentId ?? '');
 
     const useCase = new UpdateDepartmentUseCase(this.departmentRepository);
-    const dto = new UpdateDepartmentDTO(input.id, input.name, input.parentId ?? undefined);
+    
+    const dto = new UpdateDepartmentDTOOutput(input.id, input.name, input.parentId ?? undefined);
+    
     return useCase.execute(dto);
   }
 
   async deleteDepartment(id: string) {
+    const DTO = new DepartmentByIdDTO(id);
+
     const useCase = new DeleteDepartmentUseCase(this.departmentRepository);
-    return useCase.execute(id);
+
+    return useCase.execute(DTO.id);
   }
 }

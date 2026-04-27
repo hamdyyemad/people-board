@@ -53,7 +53,7 @@
 // ==================================================================
 import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../constants';
 import { normalize, toPascalCase } from '../utils/text-formatting';
-
+import { ValidationError } from '@/backend_lib/shared/exceptions';
 /**
  * Department Name Value Object
  * 
@@ -87,10 +87,10 @@ export class DepartmentName {
 
   private validate(value: string): void {
     if (!value || value.trim().length === 0) {
-      throw new Error(DEPARTMENT_NAME_MESSAGES.EMPTY);
+      throw new ValidationError(DEPARTMENT_NAME_MESSAGES.EMPTY);
     }
     if (value.trim().length > DEPARTMENT_NAME.MAX_LENGTH) {
-      throw new Error(DEPARTMENT_NAME_MESSAGES.TOO_LONG);
+      throw new ValidationError(DEPARTMENT_NAME_MESSAGES.TOO_LONG);
     }
   }
 

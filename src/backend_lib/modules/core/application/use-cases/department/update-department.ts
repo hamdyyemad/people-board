@@ -5,7 +5,7 @@ import { IDepartmentRepository } from '../../../domain/ports/repositories/depart
 import { DepartmentName } from '../../../domain/value-objects/department-name';
 
 // DTOs
-import { UpdateDepartmentDTO, DepartmentResponseViewModel } from '../../dto/department-dto';
+import { UpdateDepartmentDTOOutput, DepartmentResponseViewModel } from '../../dto/department-dto';
 
 // Exceptions
 import {
@@ -17,7 +17,7 @@ import {
 export class UpdateDepartmentUseCase {
   constructor(private readonly departmentRepository: IDepartmentRepository) {}
 
-  async execute(input: UpdateDepartmentDTO): Promise<DepartmentResponseViewModel> {
+  async execute(input: UpdateDepartmentDTOOutput): Promise<DepartmentResponseViewModel> {
     // Fetch the existing department
     const department = await this.departmentRepository.findById(input.id);
     if (!department || department.deletedAt) {
