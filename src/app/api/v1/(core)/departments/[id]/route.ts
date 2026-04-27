@@ -66,7 +66,7 @@ async function updateDepartment(
   const updatedDepartment = await departmentService.updateDepartment({
     id,
     name,
-    parentId: parentId ?? null,
+    parentId: parentId ?? undefined,
   });
 
   return createSuccessResponse(
