@@ -26,23 +26,21 @@ async function updateJob(
   const resolvedParams = await params;
   
   // Validate route parameters
-  // const paramResult = validateRouteParams(resolvedParams, jobIdParamSchema);
-  // if ('errorResponse' in paramResult) return paramResult.errorResponse;
+  const paramResult = validateRouteParams(resolvedParams, jobIdParamSchema);
+  if ('errorResponse' in paramResult) return paramResult.errorResponse;
   
-  // const { id } = paramResult.data;
-  const { id } = resolvedParams;
+  const { id } = paramResult.data;
   
     // Validate request body
-  // const result = await validateRequestBody(request, updateJobBodySchema);
-  // if ('errorResponse' in result) return result.errorResponse;
+  const result = await validateRequestBody(request, updateJobBodySchema);
+  if ('errorResponse' in result) return result.errorResponse;
 
-  // const { title, departmentId } = result.data;
-  const { title, departmentId } = await request.json();
+  const { title, departmentId } = result.data;
 
   const job = await jobService.updateJob({
     id,
-    title,
-    departmentId: departmentId,
+    title: title ?? "",
+    departmentId: departmentId ?? "",
   });
 
   return createSuccessResponse(
