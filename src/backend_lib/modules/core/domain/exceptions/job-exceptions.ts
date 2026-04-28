@@ -16,6 +16,14 @@ export class JobNotFoundError extends NotFoundError {
   }
 }
 
+/** Thrown when a Job has already been deleted. */
+export class JobAlreadyDeletedError extends NotFoundError {
+  constructor(name: string) {
+    super(`Job ${name} has already been deleted`);
+    this.name = 'JobAlreadyDeletedError';
+  }
+}
+
 /** Thrown when creating or updating a Job with a name that already exists. */
 export class DuplicateJobNameError extends BaseError {
   constructor(name: string) {

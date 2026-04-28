@@ -81,3 +81,30 @@ async function updateJob(
     201
   );
 }
+
+// ========================================================
+// DELETE /api/v1/jobs/:id - Delete a job by ID
+// ========================================================
+export const DELETE = withMiddlewares(deleteJob);
+async function deleteJob(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Await the params (Next.js 15+)
+  const resolvedParams = await params;
+  
+  // Validate route parameters
+  const paramResult = validateRouteParams(resolvedParams, jobIdParamSchema);
+  if ('errorResponse' in paramResult) return paramResult.errorResponse;
+  
+  const { id } = paramResult.data;
+
+  await jobService.deleteJob(id);
+
+  // Return success response (NextResponse.json doesn't support 204 with body)
+  return createSuccessResponse(
+    request,
+    null,
+    200
+  );
+}

@@ -4,13 +4,14 @@ import { IDepartmentRepository } from "../../domain/ports/repositories/departmen
 import { IIdGenerator } from '../../domain/ports/id-generator';
 
 // Use Cases
-import { CreateJobUseCase } from "../use-cases/job/create-job";
+import { GetJobByIdUseCase } from "../use-cases/job/get-job-by-id";
 import { CheckDepartmentExistUseCase } from './../use-cases/department/check-department-exist';
+import { CreateJobUseCase } from "../use-cases/job/create-job";
 import { UpdateJobUseCase } from "../use-cases/job/update-job";
+import { DeleteJobUseCase } from "../use-cases/job/delete-job";
 
 // DTOs
 import { CreateJobDTOInput, CreateJobDTOOutput, JobByIdDTO, UpdateJobDTOInput, UpdateJobDTOOutput } from "../dto/job-dto";
-import { GetJobByIdUseCase } from "../use-cases/job/get-job-by-id";
 
 export class JobService {
     constructor(
@@ -26,6 +27,7 @@ export class JobService {
 
         return useCase.execute(DTO.id);
     }
+
     async createJob(input: { title: string; departmentId: string }) {
         const command = new CreateJobDTOInput(input.title, input.departmentId);
 
@@ -48,5 +50,13 @@ export class JobService {
         const useCase = new UpdateJobUseCase(this.jobRepository);
         const dto = new UpdateJobDTOOutput(command.id, command.title, command.departmentId);
         return useCase.execute(dto);
+    }
+
+    async deleteJob(id: string) {
+        const DTO = new JobByIdDTO(id);
+
+        const useCase = new DeleteJobUseCase(this.jobRepository);
+
+        return useCase.execute(DTO.id);
     }
 }
