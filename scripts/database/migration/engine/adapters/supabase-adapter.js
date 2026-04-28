@@ -71,19 +71,27 @@ class SupabaseDatabaseAdapter extends BaseDatabaseAdapter {
     /**
      * Execute a query with parameters
      * For postgres.js, we use the sql template tag for proper parameter handling
-     * @param {string} query - Parameterized query (not used for array queries)
+     * @param {string} query - Parameterized query (used to determine table)
      * @param {any[]} params - Query parameters
      * @returns {Promise<any>}
      */
     async query(query, params = []) {
-        // Special handling for migration names array query
+        // Special handling for array queries with ANY()
         if (params.length > 0 && Array.isArray(params[0])) {
-            // Use postgres.js template tag for proper array handling with ANY()
-            return await this.sql`
-                SELECT migration_name 
-                FROM public.schema_migrations 
-                WHERE migration_name = ANY(${params[0]})
-            `;
+            // Detect whether this is for migrations or seeds based on the query
+            if (query.includes('schema_seeds')) {
+                return await this.sql`
+                    SELECT seed_name 
+                    FROM public.schema_seeds 
+                    WHERE seed_name = ANY(${params[0]})
+                `;
+            } else if (query.includes('schema_migrations')) {
+                return await this.sql`
+                    SELECT migration_name 
+                    FROM public.schema_migrations 
+                    WHERE migration_name = ANY(${params[0]})
+                `;
+            }
         }
 
         // Fallback for other queries

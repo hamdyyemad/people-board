@@ -9,7 +9,8 @@ import { CheckDepartmentExistUseCase } from './../use-cases/department/check-dep
 import { UpdateJobUseCase } from "../use-cases/job/update-job";
 
 // DTOs
-import { CreateJobDTOInput, CreateJobDTOOutput, UpdateJobDTOInput, UpdateJobDTOOutput } from "../dto/job-dto";
+import { CreateJobDTOInput, CreateJobDTOOutput, JobByIdDTO, UpdateJobDTOInput, UpdateJobDTOOutput } from "../dto/job-dto";
+import { GetJobByIdUseCase } from "../use-cases/job/get-job-by-id";
 
 export class JobService {
     constructor(
@@ -18,6 +19,13 @@ export class JobService {
         private readonly idGenerator: IIdGenerator
     ){}
     
+    async getJobById(id: string) {
+        const DTO = new JobByIdDTO(id);
+
+        const useCase = new GetJobByIdUseCase(this.jobRepository);
+
+        return useCase.execute(DTO.id);
+    }
     async createJob(input: { title: string; departmentId: string }) {
         const command = new CreateJobDTOInput(input.title, input.departmentId);
 

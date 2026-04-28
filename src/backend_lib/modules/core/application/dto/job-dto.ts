@@ -49,6 +49,15 @@ export class UpdateJobDTOOutput {
   ) {}
 }
 
+export class JobByIdDTO {
+  constructor(
+    public id: string) {
+      if(!isUuid(id)) {
+        throw new EntityIdError('id must be a valid UUID');
+      }
+    }
+}
+
 export class JobStatsDTO {
   constructor(
     public totalJobs: number,
