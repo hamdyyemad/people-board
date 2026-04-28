@@ -79,11 +79,11 @@ export class DepartmentService {
     const command = new UpdateDepartmentDTOInput(input.id, input.name, input.parentId);
     
     const checkParentId = new CheckParentIdUseCase(this.departmentRepository);
-    await checkParentId.execute(input.parentId ?? '');
+    await checkParentId.execute(command.parentId ?? '');
 
     const useCase = new UpdateDepartmentUseCase(this.departmentRepository);
     
-    const dto = new UpdateDepartmentDTOOutput(input.id, input.name, input.parentId ?? undefined);
+    const dto = new UpdateDepartmentDTOOutput(command.id, command.name, command.parentId ?? undefined);
     
     return useCase.execute(dto);
   }
