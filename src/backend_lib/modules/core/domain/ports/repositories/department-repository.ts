@@ -1,9 +1,15 @@
-import type { ListingQueryInput } from '@/backend_lib/shared/listing';
+// Base Repository
 import { IBaseRepository } from './base-repository';
+
+// Domain
 import { Department } from '../../entities/department';
+import { DepartmentName } from '../../value-objects/department-name';
+
+// DTOs
+import type { ListingQueryInput } from '@/backend_lib/shared/listing';
 import { DepartmentStatsDTO } from '../../../application/dto/department-dto';
 
-export type DepartmentWithParentName = Department & { parentName?: string };
+export type DepartmentWithParentName = Department & { parentName?: DepartmentName };
 
 export interface IDepartmentRepository extends IBaseRepository<Department> {
   findByParentId(parentId: string, isAudit?: boolean): Promise<Department[]>;

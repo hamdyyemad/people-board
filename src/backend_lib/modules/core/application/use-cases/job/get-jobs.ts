@@ -47,7 +47,7 @@ export class GetJobsUseCase {
           job.id,
           job.title.getFormatted(),
           job.departmentId,
-          job.departmentName,
+          job.departmentName ? job.departmentName.getFormatted() : undefined,
           job.createdAt,
           job.updatedAt,
           job.isActive()

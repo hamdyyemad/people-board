@@ -1,21 +1,30 @@
 // ORM (Drizzle) repository implementation for Job aggregate
 import { eq, isNull, and, count, ilike } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { JobsTable } from '../databases/tables/jobs-table';
+import { departmentsTable } from '../databases/tables/departments-table';
 
 // Base repository
 import { BaseRepository } from './base-repository';
 
 // Domain
-import { IJobRepository } from '../../domain/ports/repositories/job-repository';
+import { IJobRepository, JobWithDepartmentName } from '../../domain/ports/repositories/job-repository';
 import { Job } from '../../domain/entities/job';
 import { JobTitle } from '../../domain/value-objects/job-title';
+import { DepartmentName } from '../../domain/value-objects/department-name';
 
 // DTOs
 import type { ListingQueryInput } from '../../../../shared/listing';
 
 export class JobRepository extends BaseRepository<Job> implements IJobRepository {
   protected table = JobsTable;
+  private readonly departmentAlias = alias(departmentsTable, 'department');
+
+  protected resolveColumn(field: string): any {
+    if (field === 'departmentName') return this.departmentAlias.name;
+    return super.resolveColumn(field);
+  }
 
   async findByDepartmentId(departmentId: string): Promise<Job[]> {
     const result = await DrizzleClient
@@ -30,15 +39,29 @@ export class JobRepository extends BaseRepository<Job> implements IJobRepository
    * Builds the query directly (no $dynamic() chaining) so that domain-specific
    * filter conditions are ANDed into the same WHERE clause as the soft-delete
    * guard and cursor condition — not replacing them.
+   *
+   * The LEFT JOIN for department name must be part of the same SELECT so that ORDER BY
+   * (when sortBy=departmentName) and cursor WHERE can reference department.name.
    */
-  async findAll(params?: ListingQueryInput, isAudit: boolean = false): Promise<Job[]> {
+  async findAll(params?: ListingQueryInput, isAudit: boolean = false): Promise<JobWithDepartmentName[]> {
+    const projection = {
+      id: JobsTable.id,
+      title: JobsTable.title,
+      departmentId: JobsTable.departmentId,
+      departmentName: this.departmentAlias.name,
+      createdAt: JobsTable.createdAt,
+      updatedAt: JobsTable.updatedAt,
+      deletedAt: JobsTable.deletedAt,
+    };
+
     if (!params) {
       // No pagination — return all non-deleted rows.
       const result = await DrizzleClient
-        .select()
+        .select(projection)
         .from(JobsTable)
+        .leftJoin(this.departmentAlias, eq(JobsTable.departmentId, this.departmentAlias.id))
         .where(isAudit ? undefined : isNull(JobsTable.deletedAt));
-      return result.map(row => this.toDomain(row));
+      return result.map((row: any) => this.toDomainWithDepartment(row));
     }
 
     // buildListQuery sets _lastSortFields and returns the WHERE / ORDER BY / LIMIT
@@ -59,13 +82,14 @@ export class JobRepository extends BaseRepository<Job> implements IJobRepository
     }
 
     const result = await DrizzleClient
-      .select()
+      .select(projection)
       .from(JobsTable)
+      .leftJoin(this.departmentAlias, eq(JobsTable.departmentId, this.departmentAlias.id))
       .where(where.length > 0 ? and(...where) : undefined)
       .orderBy(...orderBy)
       .limit(limit);
 
-    return result.map(row => this.toDomain(row));
+    return result.map((row: any) => this.toDomainWithDepartment(row));
   }
 
   /**
@@ -117,5 +141,16 @@ export class JobRepository extends BaseRepository<Job> implements IJobRepository
       row.updatedAt,
       row.deletedAt
     );
+  }
+
+  private toDomainWithDepartment(row: any): JobWithDepartmentName {
+    // With projection, row is flat: { id, title, departmentId, departmentName, createdAt, ... }
+    // departmentName comes directly from the projection (this.departmentAlias.name)
+    const job = this.toDomain(row);
+    return Object.assign(job, {
+      departmentName: row.departmentName
+        ? DepartmentName.fromDatabase(row.departmentName)
+        : undefined,
+    }) as JobWithDepartmentName;
   }
 }

@@ -193,7 +193,7 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
     const department = this.toDomain(row);
     return Object.assign(department, {
       parentName: row.parentName
-        ? DepartmentName.fromDatabase(row.parentName).getFormatted()
+        ? DepartmentName.fromDatabase(row.parentName)
         : undefined,
     }) as DepartmentWithParentName;
   }

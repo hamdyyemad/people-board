@@ -1,8 +1,14 @@
+// Base Repository
 import { IBaseRepository } from './base-repository';
+
+// Domain
 import { Job } from '../../entities/job';
+import { DepartmentName } from '../../value-objects/department-name';
+
+// DTOs
 import { type ListingQueryInput } from '@/backend_lib/shared/listing/listing-query-builder';
 
-export type JobWithDepartmentName = Job & { departmentName?: string };
+export type JobWithDepartmentName = Job & { departmentName?: DepartmentName };
 
 export interface IJobRepository extends IBaseRepository<Job> {
   /**
@@ -10,7 +16,7 @@ export interface IJobRepository extends IBaseRepository<Job> {
    */
   findByDepartmentId(departmentId: string): Promise<Job[]>;
 
-  /** Paginated listing with parent name join. Accepts ListingQueryInput directly. */
+  /** Paginated listing with department name join. Accepts ListingQueryInput directly. */
   findAll(params?: ListingQueryInput, isAudit?: boolean): Promise<JobWithDepartmentName[]>;
 
   /**
