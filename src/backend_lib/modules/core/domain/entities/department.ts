@@ -51,7 +51,6 @@ export class Department extends BaseEntity<DepartmentCreatedEvent> {
     if (this.parentId === this.id) {
       throw new Error(DEPARTMENT_MESSAGES.OWN_PARENT);
     }
-    
   }
 
   canHaveParent(parentId: string | null): boolean {

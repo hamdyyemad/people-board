@@ -12,12 +12,10 @@ import {
   departmentQuerySchema,
   type DepartmentQuery,
 } from '@/backend_lib/modules/core/validation';
-import { validateRequestBody } from '@/backend_lib/shared/validation';
-import { validateRequestQueryParams } from '@/backend_lib/shared/validation/validate-request-body';
+import { validateRequestBody, validateRequestQueryParams } from '@/backend_lib/shared/validation';
 
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
-
 
 // ========================================================
 // GET /api/v1/departments - List departments with optional filters and pagination

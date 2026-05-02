@@ -7,11 +7,30 @@ import { withMiddlewares } from '@/backend_lib/middlewares';
 import { jobService } from '@/backend_lib/modules/core/composition-root';
 
 // Validation
-import { createJobBodySchema, updateJobBodySchema } from '@/backend_lib/modules/core/validation';
-import { validateRequestBody } from '@/backend_lib/shared/validation';
+import { validateRequestBody, validateRequestQueryParams } from '@/backend_lib/shared/validation';
+import { createJobBodySchema, jobQuerySchema, type JobQuery } from '@/backend_lib/modules/core/validation/job-schema';
 
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
+
+// ========================================================
+// GET /api/v1/jobs - List jobs with optional filters and pagination
+// ========================================================
+export const GET = withMiddlewares(getJobs);
+async function getJobs(request: NextRequest) {
+  // Validate query parameters
+  const queryResult = validateRequestQueryParams(request, jobQuerySchema);   
+  if ('errorResponse' in queryResult) return queryResult.errorResponse;
+  
+  // Get all jobs
+  const jobs = await jobService.getJobs(queryResult.data as JobQuery);
+  
+  return createSuccessResponse(
+    request,
+    jobs,
+    200
+  );
+}
 
 // ========================================================
 // POST /api/v1/jobs - Create a new job

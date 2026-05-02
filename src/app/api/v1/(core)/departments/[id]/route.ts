@@ -7,7 +7,7 @@ import { withMiddlewares } from '@/backend_lib/middlewares';
 import { departmentService } from '@/backend_lib/modules/core/composition-root';
 
 // Validation
-import { validateRouteParams, validateRequestBody } from '@/backend_lib/shared/validation/validate-request-body';
+import { validateRouteParams, validateRequestBody } from '@/backend_lib/shared/validation/validate-request';
 import { departmentIdParamSchema, updateDepartmentBodySchema } from '@/backend_lib/modules/core/validation';
 
 // HTTP Response Helpers

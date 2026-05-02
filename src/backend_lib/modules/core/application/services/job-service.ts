@@ -4,14 +4,19 @@ import { IDepartmentRepository } from "../../domain/ports/repositories/departmen
 import { IIdGenerator } from '../../domain/ports/id-generator';
 
 // Use Cases
-import { GetJobByIdUseCase } from "../use-cases/job/get-job-by-id";
-import { CheckDepartmentExistUseCase } from './../use-cases/department/check-department-exist';
-import { CreateJobUseCase } from "../use-cases/job/create-job";
-import { UpdateJobUseCase } from "../use-cases/job/update-job";
-import { DeleteJobUseCase } from "../use-cases/job/delete-job";
+import { CheckDepartmentExistUseCase } from './../use-cases/department';
+import { 
+    GetJobsUseCase,
+    GetJobByIdUseCase,
+    CreateJobUseCase, 
+    UpdateJobUseCase, 
+    DeleteJobUseCase 
+} from "../use-cases/job";
 
 // DTOs
 import { CreateJobDTOInput, CreateJobDTOOutput, JobByIdDTO, UpdateJobDTOInput, UpdateJobDTOOutput } from "../dto/job-dto";
+import { JobQuery } from "../../validation/job-schema";
+import { ListingQuery } from "@/backend_lib/shared/listing/listing-query-builder";
 
 export class JobService {
     constructor(
@@ -19,6 +24,33 @@ export class JobService {
         private readonly departmentRepository: IDepartmentRepository,
         private readonly idGenerator: IIdGenerator
     ){}
+    /**
+   * ListingQueryInput goes straight through: route → service → use case → repository.
+   * No intermediate mapping needed.
+   */
+    async getJobs(q: JobQuery) {
+        // Early exit: If a specific ID is provided, bypass listing logic
+        if(q.id) {
+            const job = await this.getJobById(q.id);
+
+            return {
+                data: job ? [job] : [],
+                nextCursor: null, // Since there's only max 1 result, there is no next page
+                prevCursor: null, // Since there's only max 1 result, there is no previous page
+                total: job ? 1 : 0 // Include this if your DTO expects a total count
+            };
+        }
+        let builder = new ListingQuery()
+            .paginate(q.limit, q.cursor, q.direction)
+            .sortFromArrays(q.sortBy, q.sortOrder);
+
+        // Apply filters based on query parameters. The repository will combine them with AND. 
+        if (q.departmentId) builder = builder.filter({ field: 'departmentId', op: 'eq', value: q.departmentId });
+        if (q.title)        builder = builder.filter({ field: 'title', op: 'contains', value: q.title });
+
+        const useCase = new GetJobsUseCase(this.jobRepository);
+        return useCase.execute(builder.build());
+    }
     
     async getJobById(id: string) {
         const DTO = new JobByIdDTO(id);

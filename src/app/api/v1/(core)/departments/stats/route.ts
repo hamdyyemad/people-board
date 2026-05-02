@@ -1,4 +1,3 @@
-import { GetDepartmentsStatsUseCase } from './../../../../../../backend_lib/modules/core/application/use-cases/department/get-departments-stats';
 import { NextRequest } from 'next/server';
 
 // Middlewares

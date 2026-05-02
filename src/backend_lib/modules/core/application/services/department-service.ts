@@ -1,18 +1,29 @@
+// Ports
 import { IDepartmentRepository } from '../../domain/ports/repositories/department-repository';
 import { IIdGenerator } from '../../domain/ports/id-generator';
 
-import { GetDepartmentsUseCase } from '../use-cases/department/get-departments';
-import { GetDepartmentsStatsUseCase } from '../use-cases/department/get-departments-stats';
-import { GetDepartmentByIdUseCase } from '../use-cases/department/get-department-by-id';
-import { CreateDepartmentUseCase } from '../use-cases/department/create-department';
-import { UpdateDepartmentUseCase } from '../use-cases/department/update-department';
-import { DeleteDepartmentUseCase } from '../use-cases/department/delete-department';
+// Use Cases
+import { 
+  GetDepartmentsUseCase,
+  CheckParentIdUseCase,
+  GetDepartmentsStatsUseCase,
+  GetDepartmentByIdUseCase,
+  CreateDepartmentUseCase,
+  UpdateDepartmentUseCase,
+  DeleteDepartmentUseCase
+} from '../use-cases/department';
 
-import { CreateDepartmentDTOInput, CreateDepartmentDTOOutput, DepartmentByIdDTO, UpdateDepartmentDTOInput, UpdateDepartmentDTOOutput } from '../dto/department-dto';
+// DTOs
+import { 
+  CreateDepartmentDTOInput, 
+  CreateDepartmentDTOOutput, 
+  DepartmentByIdDTO, 
+  UpdateDepartmentDTOInput, 
+  UpdateDepartmentDTOOutput 
+} from '../dto/department-dto';
 import { ListingQuery } from '@/backend_lib/shared/listing';
-
-import { CheckParentIdUseCase } from '../use-cases/department/check-parent-id';
 import { DepartmentQuery } from '../../validation';
+
 
 export class DepartmentService {
   constructor(

@@ -1,14 +1,21 @@
+// ORM (Drizzle) repository implementation for Department aggregate
 import { eq, isNull, and, count, sql, ilike } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DrizzleClient } from '../../../../shared/infrastructure/databases/drizzle-client';
 import { departmentsTable } from '../databases/tables/departments-table';
+
+// Base repository
+import { BaseRepository } from './base-repository';
+
+// Domain
 import {
   IDepartmentRepository,
   type DepartmentWithParentName,
 } from '../../domain/ports/repositories/department-repository';
 import { Department } from '../../domain/entities/department';
 import { DepartmentName } from '../../domain/value-objects/department-name';
-import { BaseRepository } from './base-repository';
+
+// DTOs
 import { DepartmentStatsDTO } from '../../application/dto/department-dto';
 import type { ListingQueryInput } from '../../../../shared/listing';
 

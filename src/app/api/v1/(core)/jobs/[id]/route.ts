@@ -12,7 +12,7 @@ import { validateRequestBody } from '@/backend_lib/shared/validation';
 
 // HTTP Response Helpers
 import { createSuccessResponse } from '@/backend_lib/http/response';
-import { validateRouteParams } from '@/backend_lib/shared/validation/validate-request-body';
+import { validateRouteParams } from '@/backend_lib/shared/validation/validate-request';
 
 // ========================================================
 // GET /api/v1/jobs/:id - Get a job by ID
