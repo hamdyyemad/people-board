@@ -3,7 +3,7 @@ import { IBaseRepository } from './base-repository';
 
 // Domain
 import { Department } from '../../entities/department';
-import { DepartmentName } from '../../value-objects/department-name';
+import { DepartmentName } from '../../value-objects/department';
 
 // DTOs
 import type { ListingQueryInput } from '@/backend_lib/shared/listing';

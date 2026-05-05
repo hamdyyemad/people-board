@@ -11,8 +11,8 @@ import { BaseRepository } from './base-repository';
 // Domain
 import { IJobRepository, JobWithDepartmentName } from '../../domain/ports/repositories/job-repository';
 import { Job } from '../../domain/entities/job';
-import { JobTitle } from '../../domain/value-objects/job-title';
-import { DepartmentName } from '../../domain/value-objects/department-name';
+import { JobTitle } from '../../domain/value-objects/job';
+import { DepartmentName } from '../../domain/value-objects/department';
 
 // DTOs
 import type { ListingQueryInput } from '../../../../shared/listing';

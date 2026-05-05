@@ -2,7 +2,7 @@
 import { IDepartmentRepository } from '../../../domain/ports/repositories/department-repository';
 
 // Entities & Value Objects
-import { DepartmentName } from '../../../domain/value-objects/department-name';
+import { DepartmentName } from '../../../domain/value-objects/department';
 
 // DTOs
 import { UpdateDepartmentDTOOutput, DepartmentResponseViewModel } from '../../dto/department-dto';

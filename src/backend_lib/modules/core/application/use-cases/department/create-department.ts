@@ -3,7 +3,7 @@ import { IDepartmentRepository } from '../../../domain/ports/repositories/depart
 import { IIdGenerator } from '../../../domain/ports/id-generator';
 
 // Entities & Value Objects
-import { DepartmentName } from '../../../domain/value-objects/department-name';
+import { DepartmentName } from '../../../domain/value-objects/department';
 import { Department } from '../../../domain/entities/department';
 
 // DTOs

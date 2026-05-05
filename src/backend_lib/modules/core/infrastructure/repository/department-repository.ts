@@ -13,7 +13,7 @@ import {
   type DepartmentWithParentName,
 } from '../../domain/ports/repositories/department-repository';
 import { Department } from '../../domain/entities/department';
-import { DepartmentName } from '../../domain/value-objects/department-name';
+import { DepartmentName } from '../../domain/value-objects/department';
 
 // DTOs
 import { DepartmentStatsDTO } from '../../application/dto/department-dto';

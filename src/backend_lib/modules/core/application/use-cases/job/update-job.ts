@@ -2,7 +2,7 @@
 import { IJobRepository } from "../../../domain/ports/repositories/job-repository";
 
 // Entities & Value Objects
-import { JobTitle } from "../../../domain/value-objects/job-title";
+import { JobTitle } from "../../../domain/value-objects/job";
 
 // DTOs
 import { UpdateJobDTOOutput, JobResponseViewModel } from "../../dto/job-dto";

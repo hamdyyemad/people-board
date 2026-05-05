@@ -3,7 +3,7 @@ import { IJobRepository } from "../../../domain/ports/repositories/job-repositor
 import { IIdGenerator } from "../../../domain/ports/id-generator";
 
 // Entities & Value Objects
-import { JobTitle } from "../../../domain/value-objects/job-title";
+import { JobTitle } from "../../../domain/value-objects/job";
 import { Job } from "../../../domain/entities/job";
 
 // DTOs
