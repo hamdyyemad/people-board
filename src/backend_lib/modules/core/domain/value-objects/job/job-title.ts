@@ -51,8 +51,8 @@
 //💡 Common DDD rule: 
 // Entities are mutable, but Value Objects are immutable.
 // ==================================================================
-import { JOB_TITLE, JOB_TITLE_MESSAGES } from '../constants';
-import { normalize, toPascalCase } from '../utils/text-formatting';
+import { JOB_TITLE, JOB_TITLE_MESSAGES } from '../../constants';
+import { normalize, toPascalCase } from '../../utils/text-formatting';
 
 /**
  * Job Title Value Object

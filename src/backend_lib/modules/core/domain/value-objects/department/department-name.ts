@@ -51,8 +51,8 @@
 //💡 Common DDD rule: 
 // Entities are mutable, but Value Objects are immutable.
 // ==================================================================
-import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../constants';
-import { normalize, toPascalCase } from '../utils/text-formatting';
+import { DEPARTMENT_NAME, DEPARTMENT_NAME_MESSAGES } from '../../constants';
+import { normalize, toPascalCase } from '../../utils/text-formatting';
 import { ValidationError } from '@/backend_lib/shared/exceptions';
 /**
  * Department Name Value Object

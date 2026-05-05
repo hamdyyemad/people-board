@@ -10,7 +10,7 @@
 // ---- Department name (value object) ----
 export const DEPARTMENT_NAME = {
   MIN_LENGTH: 2,
-  MAX_LENGTH: 150,
+  MAX_LENGTH: 100,
 } as const;
 
 export const DEPARTMENT_NAME_MESSAGES = {

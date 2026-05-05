@@ -21,7 +21,7 @@
 // BaseEntity is the base class for all entities in the domain. It provides common properties and methods for managing domain events, soft deletion, and validation. Each entity must implement its own validation logic by overriding the abstract validate() method. The constructor initializes the entity with an id and timestamps, and calls validation methods to ensure the entity is in a valid state upon creation. Domain events can be added, retrieved, and cleared using the provided methods.
 import { BaseEntity } from './base-entity';
 // Value Object
-import { JobTitle } from '../value-objects/job-title';
+import { JobTitle } from '../value-objects/job';
 // Domain Events
 import { JobCreatedEvent } from '../events/job/job-created';
 // Constants

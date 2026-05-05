@@ -10,7 +10,7 @@
 // ---- Job name (value object) ----
 export const JOB_TITLE = {
   MIN_LENGTH: 1,
-  MAX_LENGTH: 255,
+  MAX_LENGTH: 100,
 } as const;
 
 export const JOB_TITLE_MESSAGES = {

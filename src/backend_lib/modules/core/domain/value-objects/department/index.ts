@@ -1,0 +1,1 @@
+export { DepartmentName } from './department-name';

@@ -1,0 +1,1 @@
+export { JobTitle } from './job-title';
