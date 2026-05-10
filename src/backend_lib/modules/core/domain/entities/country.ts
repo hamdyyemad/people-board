@@ -69,6 +69,8 @@ export class Country extends BaseEntity<any> {
   }
 
   protected validate(): void {
+    // this.init() already runs this.validateId behind the scenes, no need to type it again
+    
     if (!isUuid(this.id)) throw new EntityIdError(COUNTRY_MESSAGES.ID_NOT_FOUND);
   }
 }

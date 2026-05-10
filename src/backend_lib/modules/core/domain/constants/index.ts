@@ -30,3 +30,9 @@ export {
   COUNTRY_PHONE_CODE_MESSAGES,
   COUNTRY_MESSAGES,
 } from './country';
+
+export {
+  CITY_NAME,
+  CITY_NAME_MESSAGES,
+  CITY_MESSAGES,
+} from './city';
