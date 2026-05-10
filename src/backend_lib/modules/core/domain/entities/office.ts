@@ -35,7 +35,7 @@ import { OFFICE_MESSAGES } from '../constants';
 // We have moved the validation logic for the entity ID into the BaseEntity class, since all entities share the same requirements for their IDs (non-empty and UUID-shaped). This promotes code reuse and consistency across all entities. Each entity can still implement its own specific validation logic in the validate() method, but they will all benefit from the shared ID validation logic in the base class.
 import { isUuid } from '@/backend_lib/shared/validation';
 // We have moved the EntityIdError and ValidationError into the shared exceptions module, since they are common error types that can be used across multiple entities and modules in the application. This promotes better organization and reuse of error types, and keeps our domain entities focused on their specific business logic rather than error handling details.
-import { EntityIdError, ValidationError } from '@/backend_lib/shared/exceptions';
+import { ValidationError } from '@/backend_lib/shared/exceptions';
 
 export class Office extends BaseEntity<OfficeCreatedEvent> {
   public readonly city_id: string;
@@ -66,7 +66,8 @@ export class Office extends BaseEntity<OfficeCreatedEvent> {
   }
 
   protected validate(): void {
-    if (!isUuid(this.id)) throw new EntityIdError(OFFICE_MESSAGES.ID_NOT_FOUND);
+    // this.init() already runs this.validateId behind the scenes, no need to type it again
+    
     if (!isUuid(this.city_id)) throw new ValidationError(OFFICE_MESSAGES.CITY_ID_INVALID);
   }
 }

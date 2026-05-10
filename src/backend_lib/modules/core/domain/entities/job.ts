@@ -46,7 +46,8 @@ export class Job extends BaseEntity<JobCreatedEvent> {
   }
 
   protected validate(): void {
-    if (!isUuid(this.id)) throw new EntityIdError(JOB_MESSAGES.ID_NOT_FOUND);
+    // this.init() already runs this.validateId behind the scenes, no need to type it again
+    
     if (!this.title) throw new Error(JOB_TITLE_MESSAGES.EMPTY);
     if (!isUuid(this.departmentId)) throw new EntityIdError(JOB_MESSAGES.ID_NOT_FOUND);
   }

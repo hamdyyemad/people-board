@@ -46,7 +46,8 @@ export class Department extends BaseEntity<DepartmentCreatedEvent> {
   }
 
   protected validate(): void {
-    if(!isUuid(this.id)) throw new EntityIdError(DEPARTMENT_MESSAGES.ID_NOT_FOUND);
+    // this.init() already runs this.validateId behind the scenes, no need to type it again
+    
     if(this.parentId !== null && !isUuid(this.parentId)) throw new EntityIdError(DEPARTMENT_MESSAGES.ID_NOT_FOUND);
     if (this.parentId === this.id) {
       throw new Error(DEPARTMENT_MESSAGES.OWN_PARENT);
