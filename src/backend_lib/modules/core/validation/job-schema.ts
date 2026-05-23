@@ -4,7 +4,7 @@ import { basePaginationQuerySchema } from '@/backend_lib/shared/validation/pagin
 
 // ---- Shared ----
 const uuidRequired = z
-  .string({ required_error: 'id is required' })
+  .string({ message: 'id is required' })
   .uuid('id must be a valid UUID');
 
 const uuidOptional = z
@@ -16,7 +16,7 @@ const uuidOptional = z
 .optional();
   
 const titleSchema = z
-  .string({ required_error: JOB_TITLE_MESSAGES.REQUIRED })
+  .string({ message: JOB_TITLE_MESSAGES.REQUIRED })
   .trim()
   .min(JOB_TITLE.MIN_LENGTH, JOB_TITLE_MESSAGES.EMPTY)
   .max(JOB_TITLE.MAX_LENGTH, JOB_TITLE_MESSAGES.TOO_LONG);

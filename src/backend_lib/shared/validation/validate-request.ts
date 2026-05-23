@@ -35,7 +35,7 @@ export async function validateRequestBody<TSchema extends z.ZodTypeAny>(
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     const detail =
-      parsed.error.errors.map((e: ZodIssue) => e.message).join('; ') || 'Validation failed';
+      parsed.error.issues.map((e: ZodIssue) => e.message).join('; ') || 'Validation failed';
     throw new ValidationError(detail);
   }
 
@@ -60,7 +60,7 @@ export function validateRequestQueryParams<TSchema extends z.ZodTypeAny>(
   const parsed = schema.safeParse(params);
   if (!parsed.success) {
     const detail =
-      parsed.error.errors.map((e: ZodIssue) => e.message).join('; ') || 'Validation failed';
+      parsed.error.issues.map((e: ZodIssue) => e.message).join('; ') || 'Validation failed';
     throw new ValidationError(detail);
   }
 
@@ -84,7 +84,7 @@ export function validateRouteParams<TSchema extends z.ZodTypeAny>(
   
   if (!parsed.success) {
     const detail =
-      parsed.error.errors.map((e: ZodIssue) => e.message).join('; ') || 'Invalid route parameters';
+      parsed.error.issues.map((e: ZodIssue) => e.message).join('; ') || 'Invalid route parameters';
     throw new ValidationError(detail);
   }
 

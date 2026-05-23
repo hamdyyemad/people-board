@@ -102,7 +102,7 @@ export function validateSafe<T>(
   if (!result.success) {
     const errors: Record<string, string> = {};
     
-    result.error.errors.forEach((err) => {
+    result.error.issues.forEach((err) => {
       const field = err.path.join('.');
       errors[field] = err.message;
     });
@@ -134,7 +134,7 @@ export function validateField<T>(
   const result = schema.safeParse(value);
   
   if (!result.success) {
-    return result.error.errors[0]?.message || 'Validation failed';
+    return result.error.issues[0]?.message || 'Validation failed';
   }
   
   return null;
@@ -167,7 +167,7 @@ export const uuidRequired = z.string().uuid('Must be a valid UUID');
  * Email validation helper
  */
 export const emailSchema = z
-  .string({ required_error: 'Email is required' })
+  .string({ message: 'Email is required' })
   .email('Must be a valid email address')
   .toLowerCase()
   .trim();
@@ -176,7 +176,7 @@ export const emailSchema = z
  * Password validation helper (basic)
  */
 export const passwordSchema = z
-  .string({ required_error: 'Password is required' })
+  .string({ message: 'Password is required' })
   .min(8, 'Password must be at least 8 characters');
 
 /**

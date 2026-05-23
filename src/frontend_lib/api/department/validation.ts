@@ -32,7 +32,7 @@ export { validateOrThrow, validateSafe, validateField } from '@/frontend_lib/val
  * Backend reference: DEPARTMENT_NAME.MIN_LENGTH = 1, MAX_LENGTH = 100
  */
 const nameSchema = z
-  .string({ required_error: 'Department name is required' })
+  .string({ message: 'Department name is required' })
   .min(2, 'Department name must be at least 2 characters')
   .max(100, 'Department name must be 100 characters or less')
   .trim();

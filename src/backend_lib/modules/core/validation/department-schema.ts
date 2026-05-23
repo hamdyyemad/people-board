@@ -12,7 +12,7 @@ const uuidOptional = z
   .optional();
 
 const nameSchema = z
-  .string({ required_error: DEPARTMENT_NAME_MESSAGES.REQUIRED })
+  .string({ message: DEPARTMENT_NAME_MESSAGES.REQUIRED })
   .trim()
   .min(DEPARTMENT_NAME.MIN_LENGTH, DEPARTMENT_NAME_MESSAGES.EMPTY)
   .max(DEPARTMENT_NAME.MAX_LENGTH, DEPARTMENT_NAME_MESSAGES.TOO_LONG);
