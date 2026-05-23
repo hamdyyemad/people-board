@@ -22,7 +22,7 @@ export class GetDepartmentByIdUseCase {
             department.id, 
             department.name.getFormatted(), 
             department.parentId, 
-            undefined,
+            department.parentName ? department.parentName.getFormatted() : undefined,
             department.createdAt, 
             department.updatedAt,
             department.isActive()

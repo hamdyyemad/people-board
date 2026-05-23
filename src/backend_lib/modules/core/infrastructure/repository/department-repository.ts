@@ -23,9 +23,54 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
   protected table = departmentsTable;
   private readonly parentAlias = alias(departmentsTable, 'parent');
 
+  /**
+   * Resolves custom column mappings for query building.
+   * Maps 'parentName' to the aliased parent table's name column.
+   * Used by base repository's buildListQuery for sorting and cursor operations.
+   * 
+   * @param field - The field name to resolve
+   * @returns The Drizzle column reference or calls super for standard fields
+   */
   protected resolveColumn(field: string): any {
     if (field === 'parentName') return this.parentAlias.name;
     return super.resolveColumn(field);
+  }
+
+  /**
+   * Find department by ID with parent name
+   * Overrides base implementation to include LEFT JOIN for parentName and use projection
+   * 
+   * @param id - The department ID to search for
+   * @param isAudit - If true, includes soft-deleted departments (audit mode). Default: false
+   */
+  async findById(id: string, isAudit: boolean = false): Promise<DepartmentWithParentName | null> {
+    const projection = {
+      id: departmentsTable.id,
+      name: departmentsTable.name,
+      parentId: departmentsTable.parentId,
+      parentName: this.parentAlias.name,
+      createdAt: departmentsTable.createdAt,
+      updatedAt: departmentsTable.updatedAt,
+      deletedAt: departmentsTable.deletedAt,
+    };
+
+    const whereCondition = !isAudit
+      ? and(
+          eq(departmentsTable.id, id),
+          isNull(departmentsTable.deletedAt)
+        )
+      : eq(departmentsTable.id, id);
+
+    const result = await DrizzleClient
+      .select(projection)
+      .from(departmentsTable)
+      .leftJoin(this.parentAlias, eq(departmentsTable.parentId, this.parentAlias.id))
+      .where(whereCondition)
+      .limit(1);
+
+    if (!result.length) return null;
+
+    return this.toDomainWithParent(result[0]);
   }
 
   /**
@@ -34,7 +79,7 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
    * @param parentId - The parent department ID to search for
    * @param isAudit - If true, includes soft-deleted departments (audit mode). Default: false
    */
-  async findByParentId(parentId: string, isAudit: boolean = false): Promise<Department[]> {
+  async findByParentId(parentId: string, isAudit: boolean = false): Promise<DepartmentWithParentName[]> {
     // Build WHERE conditions: always check parent, optionally exclude deleted
     const whereCondition = !isAudit
       ? and(
@@ -48,7 +93,7 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
       .from(departmentsTable)
       .where(whereCondition);
 
-    return result.map(row => this.toDomain(row));
+    return result.map(row => this.toDomainWithParent(row));
   }
 
   /**
@@ -187,6 +232,14 @@ export class DepartmentRepository extends BaseRepository<Department> implements 
     );
   }
 
+  /**
+   * Maps a database row with parent name to domain entity with parent name.
+   * Handles flat projection where parentName comes from LEFT JOIN.
+   * Creates Department entity and enriches it with optional parentName value object.
+   * 
+   * @param row - Flat database row including parentName from join
+   * @returns Department entity enriched with optional parentName
+   */
   private toDomainWithParent(row: any): DepartmentWithParentName {
     // With projection, row is flat: { id, name, parentId, parentName, createdAt, ... }
     // parentName comes directly from the projection (this.parentAlias.name)
