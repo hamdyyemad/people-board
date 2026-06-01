@@ -54,6 +54,7 @@ export class CreateOfficeUseCase {
       savedOffice.name.getFormatted(),
       savedOffice.city_id,
       undefined, // cityName not available yet
+      undefined, // countryId not available yet
       undefined, // countryName not available yet
       savedOffice.address.value,
       savedOffice.coordinates.latitude,

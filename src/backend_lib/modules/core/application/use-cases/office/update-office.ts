@@ -66,6 +66,7 @@ export class UpdateOfficeUseCase {
       updatedOffice.name.getFormatted(),
       updatedOffice.city_id,
       undefined, // cityName not available after update
+      undefined, // countryId not available after update
       undefined, // countryName not available after update
       updatedOffice.address.value,
       updatedOffice.coordinates.latitude,
