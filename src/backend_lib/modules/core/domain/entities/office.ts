@@ -50,10 +50,10 @@ export class Office extends BaseEntity<OfficeCreatedEvent> {
     public id: string,
     public name: OfficeName,
     cityIdRaw: string,
-    public is_active: boolean = true,
     addressRaw: string | null,
     latitudeRaw: string | null,
     longitudeRaw: string | null,
+    public is_active: boolean = true,
     public createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
     public deletedAt: Date | null = null

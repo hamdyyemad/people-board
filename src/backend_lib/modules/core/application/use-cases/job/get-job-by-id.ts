@@ -23,7 +23,7 @@ export class GetJobByIdUseCase {
             job.id, 
             job.title.getFormatted(), 
             job.departmentId, 
-            undefined,
+            job.departmentName ? job.departmentName.getFormatted() : undefined,
             job.createdAt, 
             job.updatedAt,
             job.isActive()

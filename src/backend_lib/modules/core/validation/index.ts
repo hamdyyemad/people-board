@@ -18,4 +18,19 @@ export {
   type JobIdParam,
   jobDepartmentParamSchema,
   type JobDepartmentParam,
+  jobQuerySchema,
+  type JobQuery,
 } from './job-schema';
+
+export {
+  createOfficeBodySchema,
+  type CreateOfficeBody,
+  updateOfficeBodySchema,
+  type UpdateOfficeBody,
+  officeIdParamSchema,
+  type OfficeIdParam,
+  officeCityParamSchema,
+  type OfficeCityParam,
+  officeQuerySchema,
+  type OfficeQuery,
+} from './office-schema';

@@ -132,5 +132,15 @@ const jobRepository = new JobRepository();
 export const jobService = new JobService(jobRepository, departmentRepository, idGenerator);
 // ----------------------------------------------------------------------------------------
 
+// ======================================Office=============================================
+import { OfficeRepository } from './infrastructure/repository/office-repository';
+import { CityRepository } from './infrastructure/repository/city-repository';
+import { OfficeService } from './application/services/office-services';
+
+const officeRepository = new OfficeRepository();
+const cityRepository = new CityRepository();
+export const officeService = new OfficeService(officeRepository, cityRepository, idGenerator);
+// ----------------------------------------------------------------------------------------
+
 
 
