@@ -57,5 +57,15 @@
   "passwordPlaceholder": "أدخل كلمة المرور",
   "signInAs": "تسجيل الدخول كـ",
   "trustedByCompanies": "موثوق من قبل أكثر من 1000 شركة",
-  "backToRoleSelection": "العودة إلى اختيار الدور"
+  "backToRoleSelection": "العودة إلى اختيار الدور",
+  "notFoundMetaTitle": "404 — الصفحة غير موجودة | PeopleBoard",
+  "notFoundMetaDescription": "تعذر العثور على الصفحة المطلوبة. عد إلى PeopleBoard لمتابعة إدارة سير عمل الموارد البشرية والموظفين.",
+  "notFoundHeading": "الصفحة غير موجودة",
+  "notFoundDescription": "الصفحة التي تبحث عنها غير موجودة أو ربما تم نقلها. تحقق من الرابط أو استخدم الروابط أدناه للعودة.",
+  "notFoundPrimaryNavLabel": "إجراءات صفحة 404",
+  "backToHome": "العودة إلى الرئيسية",
+  "goToLogin": "الذهاب إلى تسجيل الدخول",
+  "helpfulLinks": "روابط مفيدة",
+  "hrWorkspace": "مساحة عمل الموارد البشرية",
+  "employeePortal": "بوابة الموظف"
 }

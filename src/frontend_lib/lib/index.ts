@@ -5,4 +5,4 @@ export { geistSans, geistMono } from "./fonts";
 export { getLocale, getTranslations } from "./i18n";
 
 // metadata
-export { metadata } from "./metadata";
+export { metadata, buildLocalizedPageMetadata, generateNotFoundMetadata } from "./metadata";

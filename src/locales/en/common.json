@@ -57,5 +57,15 @@
   "passwordPlaceholder": "Enter your password",
   "signInAs": "Sign In as",
   "trustedByCompanies": "TRUSTED BY 1K+ COMPANIES",
-  "backToRoleSelection": "Back to role selection"
+  "backToRoleSelection": "Back to role selection",
+  "notFoundMetaTitle": "404 — Page Not Found | PeopleBoard",
+  "notFoundMetaDescription": "The page you requested could not be found. Return to PeopleBoard to continue managing your HR and employee workflows.",
+  "notFoundHeading": "Page Not Found",
+  "notFoundDescription": "The page you're looking for doesn't exist or may have been moved. Check the URL or use the links below to get back on track.",
+  "notFoundPrimaryNavLabel": "404 page actions",
+  "backToHome": "Back to Home",
+  "goToLogin": "Go to Login",
+  "helpfulLinks": "Helpful Links",
+  "hrWorkspace": "HR Workspace",
+  "employeePortal": "Employee Portal"
 }
