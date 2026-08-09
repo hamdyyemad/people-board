@@ -8,7 +8,7 @@
  *   id UUID PRIMARY KEY
  *   first_name TEXT NOT NULL
  *   last_name TEXT NOT NULL
- *   email TEXT NOT NULL
+ *   email TEXT (nullable)
  *   phone_number TEXT (nullable)
  *   city_id UUID REFERENCES cities(id) (nullable)
  *   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -30,13 +30,13 @@ import { isUuid } from '@/backend_lib/shared/validation';
 import { ValidationError } from '@/backend_lib/shared/exceptions';
 
 export class Person extends BaseEntity<PersonCreatedEvent> {
-  public readonly city_id: string | null;
+  public city_id: string | null;
 
   constructor(
     public id: string,
     public firstName: PersonFirstName,
     public lastName: PersonLastName,
-    public email: PersonEmail,
+    public email: PersonEmail | null,
     public phoneNumber: PersonPhoneNumber | null,
     cityIdRaw: string | null,
     public createdAt: Date = new Date(),
@@ -49,8 +49,10 @@ export class Person extends BaseEntity<PersonCreatedEvent> {
   }
 
   protected validate(): void {
-    // this.init() already runs this.validateId behind the scenes, no need to type it again
-    
+    if (!this.email && !this.phoneNumber) {
+      throw new ValidationError(PERSON_MESSAGES.CONTACT_REQUIRED);
+    }
+
     if (this.city_id !== null && !isUuid(this.city_id)) {
       throw new ValidationError(PERSON_MESSAGES.CITY_ID_INVALID);
     }

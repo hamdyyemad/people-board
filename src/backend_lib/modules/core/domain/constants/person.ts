@@ -29,7 +29,6 @@ export const PERSON_EMAIL = {
 } as const;
 
 export const PERSON_EMAIL_MESSAGES = {
-  EMPTY: 'Email is required',
   INVALID: 'Email format is invalid',
   TOO_LONG: `Email cannot exceed ${PERSON_EMAIL.MAX_LENGTH} characters`,
 } as const;
@@ -50,4 +49,11 @@ export const PERSON_PHONE_MESSAGES = {
 export const PERSON_MESSAGES = {
   ID_NOT_FOUND: 'Person with the specified ID does not exist',
   CITY_ID_INVALID: 'Person city_id must be a valid UUID',
+  CONTACT_REQUIRED: 'At least one of email or phone number is required',
+} as const;
+
+/** API validation messages for person-related UUID fields (Zod schemas). */
+export const PERSON_ID_MESSAGES = {
+  CITY_ID_REQUIRED: 'city_id is required',
+  CITY_ID_INVALID: 'city_id must be a valid UUID',
 } as const;

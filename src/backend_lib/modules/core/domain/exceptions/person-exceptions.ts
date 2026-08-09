@@ -38,6 +38,20 @@ export class DuplicatePersonEmailError extends BaseError {
   }
 }
 
+/** Thrown when creating or updating a person with a phone number that already exists. */
+export class DuplicatePersonPhoneError extends BaseError {
+  constructor(phoneNumber: string) {
+    super(
+      `Person with phone number "${phoneNumber}" already exists`,
+      409,
+      true,
+      'duplicate-person-phone',
+      'Duplicate Person Phone Number'
+    );
+    this.name = 'DuplicatePersonPhoneError';
+  }
+}
+
 /** Thrown when city_id is provided but does not reference an existing city. */
 export class InvalidPersonCityError extends ValidationError {
   constructor(cityId: string) {

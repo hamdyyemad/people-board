@@ -6,6 +6,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Person email — stored lowercase for case-insensitive uniqueness.
+ * Nullable at entity level; use {@link fromNullable} when hydrating or building from API input.
  */
 export class PersonEmail {
   readonly value: string;
@@ -22,10 +23,17 @@ export class PersonEmail {
     return email;
   }
 
+  static fromNullable(value: string | null | undefined): PersonEmail | null {
+    if (value === null || value === undefined || value.trim() === '') {
+      return null;
+    }
+    return new PersonEmail(value);
+  }
+
   private validate(value: string): void {
     const trimmed = value?.trim() ?? '';
     if (!trimmed) {
-      throw new ValidationError(PERSON_EMAIL_MESSAGES.EMPTY);
+      throw new ValidationError(PERSON_EMAIL_MESSAGES.INVALID);
     }
     if (trimmed.length > PERSON_EMAIL.MAX_LENGTH) {
       throw new ValidationError(PERSON_EMAIL_MESSAGES.TOO_LONG);

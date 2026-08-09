@@ -142,5 +142,25 @@ const cityRepository = new CityRepository();
 export const officeService = new OfficeService(officeRepository, cityRepository, idGenerator);
 // ----------------------------------------------------------------------------------------
 
+// ======================================Person=============================================
+import { PersonRepository } from './infrastructure/repository/person-repository';
+
+const personRepository = new PersonRepository();
+// ----------------------------------------------------------------------------------------
+
+// ======================================Employee===========================================
+import { EmployeeRepository } from './infrastructure/repository/employee-repository';
+import { EmployeeService } from './application/services/employee-service';
+
+const employeeRepository = new EmployeeRepository();
+export const employeeService = new EmployeeService(
+  employeeRepository,
+  personRepository,
+  jobRepository,
+  officeRepository,
+  cityRepository,
+  idGenerator
+);
+// ----------------------------------------------------------------------------------------
 
 

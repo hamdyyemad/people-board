@@ -1,4 +1,5 @@
 import { PERSON_PHONE, PERSON_PHONE_MESSAGES } from '../../constants';
+import { normalizePhone } from '../../utils/phone-formatting';
 import { ValidationError } from '@/backend_lib/shared/exceptions';
 
 const PHONE_PATTERN = /^[+]?[\d\s().-]+$/;
@@ -11,7 +12,7 @@ export class PersonPhoneNumber {
 
   constructor(value: string) {
     this.validate(value);
-    this.value = value.trim();
+    this.value = normalizePhone(value);
   }
 
   /** @internal Trusted DB hydration only. */

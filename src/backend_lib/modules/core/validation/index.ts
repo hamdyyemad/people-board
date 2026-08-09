@@ -34,3 +34,14 @@ export {
   officeQuerySchema,
   type OfficeQuery,
 } from './office-schema';
+
+export {
+  createEmployeeBodySchema,
+  type CreateEmployeeBody,
+  updateEmployeeBodySchema,
+  type UpdateEmployeeBody,
+  employeeIdParamSchema,
+  type EmployeeIdParam,
+  employeeQuerySchema,
+  type EmployeeQuery,
+} from './employee-schema';
