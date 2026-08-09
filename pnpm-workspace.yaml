@@ -1,0 +1,22 @@
+overrides:
+  "@babel/core": ">=7.29.6"
+  # ESLint requires ajv v6 (v8 drops lib/refs/json-schema-draft-04.json).
+  # Constrained to the v6 line, which still satisfies the <6.14.0 advisory.
+  ajv: ">=6.14.0 <7"
+  brace-expansion: ">=5.0.9"
+  drizzle-orm: ">=0.45.2"
+  esbuild: ">=0.28.1"
+  fast-uri: ">=3.1.5"
+  flatted: ">=3.4.2"
+  glob: ">=10.5.0"
+  js-yaml: ">=5.2.2"
+  minimatch@3.1.2: "3.1.4"
+  minimatch@9.0.5: "9.0.7"
+  nanoid: ">=3.3.17"
+  next: ">=16.2.11"
+  picomatch: ">=4.0.4"
+  postcss: ">=8.5.23"
+  sharp: ">=0.35.0"
+  tmp: ">=0.2.6"
+  uuid: ">=14.0.0"
+  yaml: ">=2.8.3"
